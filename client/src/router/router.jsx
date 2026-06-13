@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
-import PublicLayout from "../layouts/publicLayout.jsx";
-import AdminLayout from "../layouts/adminLayout.jsx";
-import UserLayout from "../layouts/userLayout.jsx";
+import PublicLayout from "../components/layouts/publicLayout.jsx";
+import AdminLayout from "../components/layouts/adminLayout.jsx";
+import UserLayout from "../components/layouts/userLayout.jsx";
 import ErrorPage from "../pages/error/errorPage.jsx";
 import LandingPage from "../pages/public/LandingPage.jsx";
 import Shop from "../pages/public/shop.jsx";
@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
                 element: <div>Product Details</div>
             },
             {
-                path: "/profile",
+                path: "/account",
                 element: <div>Profile</div>
             }
         ]
