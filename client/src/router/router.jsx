@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import PublicLayout from "../components/layouts/publicLayout.jsx";
 import AdminLayout from "../components/layouts/adminLayout.jsx";
 import UserLayout from "../components/layouts/userLayout.jsx";
@@ -16,9 +16,11 @@ import ShippingPage from "../pages/public/checkout/ShippingPage.jsx";
 import PaymentPage from "../pages/public/checkout/PaymentPage.jsx";
 import ReviewPage from "../pages/public/checkout/ReviewPage.jsx";
 import BuilderPage from "../pages/public/builder.jsx";
-
-
-
+import AccountLayout from "../components/layouts/accountLayout.jsx";
+import AccountOrders from "../pages/account/AccountOrders.jsx";
+import AccountCrew from "../pages/account/AccountCrew.jsx";
+import AccountSettings from "../pages/account/AccountSettings.jsx";
+import AccountWishlist from "../pages/account/AccountWishlist.jsx";
 
 
 
@@ -43,7 +45,14 @@ export const router = createBrowserRouter([
             },
             {
                 path: "/account",
-                element: <div>Profile</div>
+                element: <AccountLayout />,
+                children: [
+                    { index: true, element: <Navigate to="/account/orders" replace /> },
+                    { path: "orders", element: <AccountOrders /> },
+                    { path: "crew", element: <AccountCrew /> },
+                    { path: "settings", element: <AccountSettings /> },
+                    { path: "wishlist", element: <AccountWishlist /> },
+                ]
             },
             {
                 path: "/cart",

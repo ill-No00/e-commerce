@@ -1,3 +1,6 @@
+import heroImage from "../../assets/images/hero_img_est.png";
+
+
 export default function HeroSection() {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center px-8 py-12 min-h-screen">
@@ -18,8 +21,11 @@ export default function HeroSection() {
       </div>
 
       <div className="relative w-full">
-        <div className="w-full aspect-[4/5] bg-[#282826] rounded-3xl" />
-        <div className="absolute -bottom-4 left-4 bg-[#6A4C93] text-[#F8F9FA] font-bold text-xs px-4 py-2 rounded-xl shadow-lg uppercase tracking-wider">
+        <div className="w-full aspect-4/5 bg-[#282826] rounded-3xl overflow-hidden" >
+          <img className="w-full h-full object-cover" src={heroImage} alt="hero-image" />
+        </div>
+
+        <div className="absolute -bottom-10 left-4 bg-[#6A4C93] text-[#F8F9FA] font-bold text-3xl px-20 py-8  rounded-xl shadow-lg uppercase tracking-wider">
           EST. 2024
         </div>
       </div>

@@ -1,9 +1,17 @@
+import wheel from "../../assets/images/wheel.png";
+import shadow from "../../assets/images/shadow.png";
+
+
 export default function OurDnaSection() {
   return (
     <section className="flex flex-col md:flex-row items-center gap-12 px-8 py-16">
       <div className="flex gap-4 w-full md:w-1/2">
-        <div className="w-1/2 aspect-square bg-[#282826] rounded-2xl" />
-        <div className="w-1/2 aspect-square bg-[#282826] rounded-2xl" />
+        <div className="w-1/2 aspect-square bg-[#282826] rounded-2xl overflow-hidden" >
+          <img src={wheel} alt="wheels" className="w-full h-full object-cover" />
+        </div>
+        <div className="w-1/2 aspect-square bg-[#282826] rounded-2xl" >
+          <img src={shadow} alt="shadow" className="w-full h-full object-cover"  />
+        </div>
       </div>
 
       <div className="w-full md:w-1/2">

@@ -3,58 +3,19 @@ import { Link } from "react-router-dom";
 export default function Footer() {
   return (
     <footer className="w-full px-4 pb-4">
-      <div className="bg-[#EF476F] rounded-t-[2rem] p-8 md:p-12 text-[#121212]">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+      <div className="bg-gradient-to-r from-[#ff2d78] to-[#c2185b] rounded-t-[2rem] p-6 md:p-8 text-[#121212]">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="text-2xl font-black">4WHEELS</div>
-            <p className="text-[10px] uppercase font-medium tracking-tight mt-2 opacity-80 max-w-xs">
-              Built for the concrete gallery. Every scratch tells a story.
-            </p>
-            <p className="text-[9px] uppercase tracking-tight mt-4 opacity-60">
-              &copy; 2026 4WHEELS SKATE CO.
+            <p className="text-[9px] uppercase font-medium tracking-tight mt-2 opacity-70">
+              &copy; 2026 4WHEELS SKATE CO. BUILT FOR THE CONCRETE GALLERY.
             </p>
           </div>
-
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-widest mb-3">
-              COLLECTIONS
-            </h4>
-            <div className="flex flex-col gap-2 text-[10px] font-bold uppercase text-[#121212]/80">
-              <Link to="/shop">SHOP</Link>
-              <Link to="/">STORY</Link>
-              <Link to="/retailers">RETAILERS</Link>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-widest mb-3">
-              LEGAL
-            </h4>
-            <div className="flex flex-col gap-2 text-[10px] font-bold uppercase text-[#121212]/80">
-              <Link to="/privacy">PRIVACY</Link>
-              <Link to="/terms">TERMS</Link>
-            </div>
-          </div>
-
-          <div className="flex flex-col justify-between h-full">
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest mb-3">
-                SOCIAL
-              </h4>
-              <div className="flex flex-col gap-2 text-[10px] font-bold uppercase text-[#121212]/80">
-                <Link to="#">INSTAGRAM</Link>
-                <Link to="#">YOUTUBE</Link>
-              </div>
-            </div>
-            <div className="mt-6 md:mt-0 self-start md:self-end">
-              <span className="bg-black text-white text-[9px] font-black uppercase tracking-wider px-4 py-2 rounded-full flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
-                CONTACT CREW
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M7 17L17 7" />
-                  <path d="M7 7h10v10" />
-                </svg>
-              </span>
-            </div>
+          <div className="flex items-center gap-6 text-[11px] font-bold uppercase tracking-wider">
+            <Link to="/privacy" className="hover:underline">PRIVACY</Link>
+            <Link to="/terms" className="hover:underline">TERMS</Link>
+            <Link to="/retailers" className="hover:underline">RETAILERS</Link>
+            <Link to="/contact" className="underline">CONTACT</Link>
           </div>
         </div>
       </div>

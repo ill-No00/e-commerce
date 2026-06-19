@@ -1,14 +1,34 @@
+import field from "../../assets/images/field.png";
+import gallery from "../../assets/images/gallery.png";
+
 export default function AsymmetricalGrid() {
   return (
     <section className="grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-12">
-      <div className="md:col-span-7 w-full aspect-[4/5] bg-[#282826] rounded-3xl p-8 flex flex-col justify-end relative">
-        <h3 className="text-2xl font-black text-[#F8F9FA] uppercase mb-2">
-          THE GALLERY
-        </h3>
-        <p className="text-[11px] text-[#737373] max-w-xs">
-          Explore our curated collection of street photography capturing the
-          essence of urban culture and movement.
-        </p>
+      <div className="md:col-span-7 w-full aspect-4/5 bg-[#282826] rounded-3xl flex flex-col justify-end relative overflow-hidden group">
+        <img
+          src={field}
+          alt="field"
+          className="
+            absolute inset-0
+            w-full h-full
+            object-cover
+            transition-transform duration-500
+            group-hover:scale-110
+          "
+        />
+
+        <div className="absolute inset-0 bg-black/50" />
+
+        <div className="relative z-10 pb-10 pl-5">
+          <h3 className="text-2xl font-black text-[#F8F9FA] uppercase mb-2">
+            THE GALLERY
+          </h3>
+
+          <p className="text-[11px] text-[#737373] max-w-xs">
+            Explore our curated collection of street photography capturing the
+            essence of urban culture and movement.
+          </p>
+        </div>
       </div>
 
       <div className="md:col-span-5">
@@ -20,7 +40,9 @@ export default function AsymmetricalGrid() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-4">
-          <div className="bg-[#282826] rounded-3xl aspect-square" />
+          <div className="bg-[#282826] rounded-3xl aspect-square overflow-hidden group" >
+            <img src={gallery} alt="gallery" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+          </div>
           <div className="bg-[#EF476F] rounded-3xl p-6 flex flex-col justify-between aspect-square">
             <svg
               width="32"
