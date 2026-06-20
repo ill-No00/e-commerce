@@ -20,11 +20,11 @@ export default function AsymmetricalGrid() {
         <div className="absolute inset-0 bg-black/50" />
 
         <div className="relative z-10 pb-10 pl-5">
-          <h3 className="text-2xl font-black text-[#F8F9FA] uppercase mb-2">
+          <h3 className="text-2xl lg:text-4xl font-black text-[#F8F9FA] uppercase mb-2">
             THE GALLERY
           </h3>
 
-          <p className="text-[11px] text-[#737373] max-w-xs">
+          <p className="text-[11px] lg:text-lg font-extralight text-[#c9c9c9] max-w-xs">
             Explore our curated collection of street photography capturing the
             essence of urban culture and movement.
           </p>
@@ -32,7 +32,7 @@ export default function AsymmetricalGrid() {
       </div>
 
       <div className="md:col-span-5">
-        <div className="bg-[#6A4C93] rounded-3xl p-8 flex items-center justify-center min-h-[220px]">
+        <div className="bg-[#6A4C93] rounded-3xl p-8 flex items-center justify-center min-h-55">
           <p className="text-lg text-[#F8F9FA] tracking-wide uppercase leading-snug font-bold">
             &ldquo;STREET SKATING ISN&apos;T A HOBBY, IT&apos;S A RADICAL
             RECLAMATION OF PUBLIC SPACE.&rdquo;

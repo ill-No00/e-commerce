@@ -9,7 +9,7 @@ export default function OurDnaSection() {
         <div className="w-1/2 aspect-square bg-[#282826] rounded-2xl overflow-hidden" >
           <img src={wheel} alt="wheels" className="w-full h-full object-cover" />
         </div>
-        <div className="w-1/2 aspect-square bg-[#282826] rounded-2xl" >
+        <div className="w-1/2 aspect-square bg-[#282826] rounded-2xl overflow-hidden" >
           <img src={shadow} alt="shadow" className="w-full h-full object-cover"  />
         </div>
       </div>
