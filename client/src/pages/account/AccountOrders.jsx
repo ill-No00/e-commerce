@@ -24,7 +24,7 @@ const orders = [
     name: "GRAPHITE TRUCKS V2",
     price: "$120.00",
     status: "PROCESSING",
-    statusColor: "bg-[#555]",
+    statusColor: "bg-[#666]",
     action: "CANCEL_REQUEST",
     actionIcon: XCircle,
   },

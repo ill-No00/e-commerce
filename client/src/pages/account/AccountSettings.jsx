@@ -159,7 +159,7 @@ export default function AccountSettingsPage() {
                     <button className="text-[#888] hover:text-[#ef4444] transition-colors"><Trash2 size={12} className="md:hidden" /><Trash2 size={13} className="hidden md:block" /></button>
                   </div>
                 </div>
-                <div className="text-[10px] md:text-[11px] text-[#ccc] leading-relaxed">{addr.address}</div>
+                <div className="text-[10px] md:text-[11px] text-[#888] leading-relaxed">{addr.address}</div>
               </div>
             ))}
           </div>
