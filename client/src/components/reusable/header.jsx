@@ -1,7 +1,10 @@
-import { ShoppingCart, User, Search } from "lucide-react";
+import { ShoppingCart, User, Search, LogOut } from "lucide-react";
 import { NavLink, Link } from "react-router-dom";
+import { useAuth } from "../../store/auth.jsx";
 
 export default function Header() {
+  const { user, logout } = useAuth();
+
   return (
     <header className="w-full bg-[#121212]/80 backdrop-blur-md px-8 py-4 fixed top-0 z-50">
       <nav className="flex items-center justify-between">
@@ -31,16 +34,29 @@ export default function Header() {
             >
               STORY
             </NavLink>
-            <NavLink
-              to="/account"
-              className={({ isActive }) =>
-                isActive
-                  ? "text-[#F8F9FA] text-xs uppercase tracking-widest border-b-2 border-[#EF476F] pb-1"
-                  : "text-[#F8F9FA] text-xs uppercase tracking-widest pb-1"
-              }
-            >
-              ACCOUNT
-            </NavLink>
+            {user ? (
+              <NavLink
+                to="/account"
+                className={({ isActive }) =>
+                  isActive
+                    ? "text-[#F8F9FA] text-xs uppercase tracking-widest border-b-2 border-[#EF476F] pb-1"
+                    : "text-[#F8F9FA] text-xs uppercase tracking-widest pb-1"
+                }
+              >
+                ACCOUNT
+              </NavLink>
+            ) : (
+              <NavLink
+                to="/login"
+                className={({ isActive }) =>
+                  isActive
+                    ? "text-[#F8F9FA] text-xs uppercase tracking-widest border-b-2 border-[#EF476F] pb-1"
+                    : "text-[#F8F9FA] text-xs uppercase tracking-widest pb-1"
+                }
+              >
+                SIGN IN
+              </NavLink>
+            )}
           </div>
         </div>
 
@@ -59,9 +75,15 @@ export default function Header() {
               2
             </span>
           </Link>
-          <button className="text-[#F8F9FA]" aria-label="User profile">
-            <User size={20} />
-          </button>
+          {user ? (
+            <button onClick={logout} className="text-[#F8F9FA]" aria-label="Logout">
+              <LogOut size={18} />
+            </button>
+          ) : (
+            <Link to="/login" className="text-[#F8F9FA]" aria-label="Sign in">
+              <User size={20} />
+            </Link>
+          )}
         </div>
       </nav>
     </header>

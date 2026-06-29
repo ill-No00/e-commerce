@@ -1,5 +1,11 @@
 import dotenv from "dotenv";
-dotenv.config();
+import path from 'path'
+
+dotenv.config({
+  path: path.join(process.cwd() , '.env')
+});
+
+
 
 function required(name) {
   const val = process.env[name];
@@ -15,8 +21,7 @@ export const config = {
 
   supabase: {
     url: required("SUPABASE_URL"),
-    anonKey: required("SUPABASE_ANON_KEY"),
-    serviceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
+    pass:required("SUPABASE_PASS")
   },
 
   cors: {

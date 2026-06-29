@@ -226,7 +226,7 @@ router.post("/danger-zone/reset-builder-data", async (req, res, next) => {
 
     await supabase.from("danger_zone_log").insert({
       action: "RESET_BUILDER_DATA",
-      performed_by: req.userId,
+      actor_id: req.userId,
     });
 
     res.json({ message: "Builder data reset successfully" });
@@ -240,7 +240,13 @@ router.post("/activity-log", async (req, res, next) => {
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("admin_activity_log")
-      .insert({ ...req.body, user_id: req.userId })
+      .insert({
+        actor_id: req.userId,
+        event_type: req.body.event_type || "manual_entry",
+        message: req.body.message || "",
+        severity: req.body.severity || "info",
+        metadata: req.body.metadata || {},
+      })
       .select()
       .single();
 

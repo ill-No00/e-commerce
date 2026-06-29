@@ -19,6 +19,7 @@ router.get("/", async (req, res, next) => {
           products!inner(id, name, slug)
         )
       `)
+      .eq("user_id", req.userId)
       .order("added_at", { ascending: false });
 
     if (error) {

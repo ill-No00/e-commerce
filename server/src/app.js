@@ -36,6 +36,7 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
 app.use(limiter);
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));

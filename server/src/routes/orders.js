@@ -29,6 +29,24 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.get("/shipping-methods", async (req, res, next) => {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("shipping_methods")
+      .select("*")
+      .eq("is_active", true);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const supabase = getSupabase();
@@ -118,27 +136,17 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ error: itemsError.message });
     }
 
-    await supabase.from("cart_items").delete().eq("cart_id", req.userId);
-
-    res.status(201).json({ data: order });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get("/shipping-methods", async (req, res, next) => {
-  try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from("shipping_methods")
-      .select("*")
-      .eq("is_active", true);
-
-    if (error) {
-      return res.status(400).json({ error: error.message });
+    const { data: cart } = await supabase
+      .from("carts")
+      .select("id")
+      .eq("user_id", req.userId)
+      .maybeSingle();
+    if (cart) {
+      await supabase.from("cart_items").delete().eq("cart_id", cart.id);
+      await supabase.from("carts").delete().eq("id", cart.id);
     }
 
-    res.json({ data });
+    res.status(201).json({ data: order });
   } catch (err) {
     next(err);
   }

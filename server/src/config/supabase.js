@@ -1,14 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "./env.js";
 
-let anonClient = null;
+let client = null;
 let serviceClient = null;
 
 export function getSupabase() {
-  if (!anonClient) {
-    anonClient = createClient(config.supabase.url, config.supabase.anonKey);
+  if (!client) {
+    client = createClient(config.supabase.url, config.supabase.anonKey);
   }
-  return anonClient;
+  return client;
 }
 
 export function getServiceSupabase() {
@@ -21,3 +21,7 @@ export function getServiceSupabase() {
   }
   return serviceClient;
 }
+
+
+
+

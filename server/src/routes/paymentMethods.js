@@ -32,6 +32,7 @@ const saveCardSchema = z.object({
   last4: z.string().length(4),
   expiry_month: z.number().int().min(1).max(12),
   expiry_year: z.number().int(),
+  cardholder_name: z.string().max(100).optional(),
   is_default: z.boolean().optional().default(false),
 });
 
