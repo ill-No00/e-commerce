@@ -1,7 +1,13 @@
 const inputClass =
   "w-full bg-[#1A1A1A] rounded-xl border border-neutral-700 text-white text-xs px-4 py-3 placeholder:text-[#737373] outline-none focus:border-[#EF476F] transition-colors";
 
-export default function PaymentForm() {
+export default function PaymentForm({ form = {}, onChange }) {
+  const handleChange = (field, value) => {
+    if (onChange) {
+      onChange(field, value);
+    }
+  };
+
   return (
     <div className="bg-[#121212] rounded-3xl border border-neutral-900 p-6">
       <div className="flex items-center gap-2 mb-6">
@@ -18,13 +24,13 @@ export default function PaymentForm() {
         QUICK AUTH
       </span>
       <div className="flex gap-3 mb-6">
-        <button className="flex-1 bg-[#1A1A1A] border border-neutral-700 rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer">
+        <button type="button" className="flex-1 bg-[#1A1A1A] border border-neutral-700 rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F8F9FA" strokeWidth="2">
             <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
           </svg>
           <span className="text-[10px] font-bold text-white uppercase tracking-wider">APPLE PAY</span>
         </button>
-        <button className="flex-1 bg-[#1A1A1A] border border-neutral-700 rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer">
+        <button type="button" className="flex-1 bg-[#1A1A1A] border border-neutral-700 rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#F8F9FA">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -45,26 +51,50 @@ export default function PaymentForm() {
         <label className="text-[10px] font-bold text-[#737373] uppercase tracking-widest block mb-2">
           CARDHOLDER NAME
         </label>
-        <input type="text" placeholder="Tony Alva" className={inputClass} />
+        <input
+          type="text"
+          placeholder="Tony Alva"
+          className={inputClass}
+          value={form.cardholderName || ""}
+          onChange={(e) => handleChange("cardholderName", e.target.value)}
+        />
       </div>
       <div className="mt-4">
         <label className="text-[10px] font-bold text-[#737373] uppercase tracking-widest block mb-2">
           CARD NUMBER
         </label>
-        <input type="text" placeholder="4000 0000 0000 0000" className={inputClass} />
+        <input
+          type="text"
+          placeholder="4000 0000 0000 0000"
+          className={inputClass}
+          value={form.cardNumber || ""}
+          onChange={(e) => handleChange("cardNumber", e.target.value)}
+        />
       </div>
       <div className="grid grid-cols-2 gap-4 mt-4">
         <div>
           <label className="text-[10px] font-bold text-[#737373] uppercase tracking-widest block mb-2">
             EXPIRY DATE
           </label>
-          <input type="text" placeholder="MM/YY" className={inputClass} />
+          <input
+            type="text"
+            placeholder="MM/YY"
+            className={inputClass}
+            value={form.expiry || ""}
+            onChange={(e) => handleChange("expiry", e.target.value)}
+          />
         </div>
         <div>
           <label className="text-[10px] font-bold text-[#737373] uppercase tracking-widest block mb-2">
             SECURITY CODE
           </label>
-          <input type="text" placeholder="CVV" className={inputClass} />
+          <input
+            type="text"
+            placeholder="CVV"
+            className={inputClass}
+            value={form.cvv || ""}
+            onChange={(e) => handleChange("cvv", e.target.value)}
+          />
         </div>
       </div>
 

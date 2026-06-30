@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { adminApi } from "../../api/admin.js";
 import Pagination from "../../components/admin/Pagination";
 import Modal from "../../components/admin/Modal";
 
@@ -30,8 +32,19 @@ export default function InventoryPage() {
   const [activeCat, setActiveCat] = useState("ALL");
   const [restockProduct, setRestockProduct] = useState(null);
   const [restockQty, setRestockQty] = useState(1);
+  const [apiProducts, setApiProducts] = useState(null);
+  const [loadingProds, setLoadingProds] = useState(true);
 
-  const filtered = activeCat === "ALL" ? products : products.filter((p) => p.category === activeCat);
+  useEffect(() => {
+    adminApi
+      .inventory()
+      .then((res) => setApiProducts(res.data))
+      .catch(() => {})
+      .finally(() => setLoadingProds(false));
+  }, []);
+
+  const productList = apiProducts ?? products;
+  const filtered = activeCat === "ALL" ? productList : productList.filter((p) => p.category === activeCat);
 
   const stockColor = (stock) => {
     if (stock === 0) return "text-[#ef4444]";

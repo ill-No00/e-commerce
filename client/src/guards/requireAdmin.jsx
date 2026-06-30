@@ -2,6 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../store/auth.jsx";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { adminApi } from "../api/admin.js";
 
 export default function RequireAdmin({ children }) {
   const { user, loading } = useAuth();
@@ -14,14 +15,9 @@ export default function RequireAdmin({ children }) {
       return;
     }
 
-    const token = localStorage.getItem("4wheels_token");
-    const API = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
-
-    fetch(`${API}/admin/dashboard`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("not admin");
+    adminApi
+      .dashboard()
+      .then(() => {
         setAdminState({ checking: false, isAdmin: true });
       })
       .catch(() => {
@@ -37,8 +33,12 @@ export default function RequireAdmin({ children }) {
     );
   }
 
-  if (!user || !adminState.isAdmin) {
-    return <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" state={{ from: "/admin" }} replace />;
+  }
+
+  if (!adminState.isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

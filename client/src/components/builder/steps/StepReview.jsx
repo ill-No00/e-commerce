@@ -29,7 +29,6 @@ export default function StepReview({ selections }) {
         <div className="grid grid-cols-1 gap-3">
           {items.map((item, i) => {
             const isSmall = i >= 4;
-            const Wrapper = isSmall ? "div" : "div";
             return (
               <div
                 key={item.category}

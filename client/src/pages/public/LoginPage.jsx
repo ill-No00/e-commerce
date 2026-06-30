@@ -20,8 +20,15 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
-      navigate(from, { replace: true });
+      const json = await login(email, password);
+
+      console.log("returned json from login : " + json)
+      
+      if (json.is_admin && from === "/account") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       setError(err.message);
     } finally {

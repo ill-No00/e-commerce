@@ -57,9 +57,21 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ error: error.message });
     }
 
+    // Check if user is an active admin
+    const { data: adminRecord } = await supabase
+      .from("admin_users")
+      .select("*")
+      .eq("id", data.user.id)
+      .eq("status", "ACTIVE")
+      .maybeSingle();
+
+    console.log(data)
+
     res.json({
       user: data.user,
       session: data.session,
+      is_admin: !!adminRecord,
+      admin_role: adminRecord?.role || null,
     });
   } catch (err) {
     next(err);

@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { productsApi } from "../../api/products.js";
 
 function slugify(title) {
   return title
@@ -23,41 +25,6 @@ const deckSizes = [
 ];
 
 const crewTags = ["TOKYO DRIFT", "NYC KINGS", "BERLIN CORE"];
-
-const products = [
-  {
-    title: "TOKYO NEON '24",
-    price: "$85.00",
-    badge: "PRO SERIES",
-    badgeColor: "bg-sky-500",
-    sub: "TEAM DECK / 8.25",
-    rating: "4.9",
-  },
-  {
-    title: "CONCRETE GHOST",
-    price: "$79.00",
-    badge: null,
-    badgeColor: null,
-    sub: "STREET SERIES / 8.0",
-    rating: "4.8",
-  },
-  {
-    title: "PURPLE HAZE V2",
-    price: "$92.00",
-    badge: "NEW DROP",
-    badgeColor: "bg-[#6A4C93]",
-    sub: "DECK + GRIP / 8.5",
-    rating: "4.9",
-  },
-  {
-    title: "BLUR ELEMENT",
-    price: "$85.00",
-    badge: null,
-    badgeColor: null,
-    sub: "TEAM DECK / 8.0",
-    rating: "4.7",
-  },
-];
 
 function FilterCheckbox({ label, selected }) {
   return (
@@ -94,42 +61,48 @@ function FilterGroup({ title, children }) {
 }
 
 function ProductCard({ product }) {
+  const title = product.name || product.title;
+  const price = product.base_price_cents != null
+    ? `$${(product.base_price_cents / 100).toFixed(2)}`
+    : product.price;
+  const badge = product.badge || null;
+  const rating = product.rating_avg ?? product.rating;
+  const sub = product.category?.name || product.sub;
+  const slug = product.slug || slugify(title);
+
   return (
     <Link
-      to={`/shop/${slugify(product.title)}`}
+      to={`/shop/${slug}`}
       state={{
-        title: product.title,
-        price: product.price,
-        tagline: product.sub,
-        rating: product.rating,
-        badge: product.badge,
-        badgeColor: product.badgeColor,
+        title,
+        price,
+        tagline: sub,
+        rating,
+        badge,
       }}
       className="group block"
       onClick={() => window.scrollTo(0, 0)}
     >
       <div className="w-full aspect-[3/4] bg-[#282826] rounded-2xl relative mb-3 overflow-hidden group-hover:scale-[1.02] transition-transform duration-300">
-        {product.badge && (
-          <span
-            className={`absolute top-3 right-3 ${product.badgeColor} text-white font-bold text-[8px] tracking-wider px-2 py-0.5 rounded uppercase`}
-          >
-            {product.badge}
+        {badge && (
+          <span className="absolute top-3 right-3 bg-sky-500 text-white font-bold text-[8px] tracking-wider px-2 py-0.5 rounded uppercase">
+            {badge}
           </span>
         )}
       </div>
       <div className="flex justify-between items-start mt-2">
         <span className="text-xs font-black text-white uppercase tracking-tight group-hover:text-[#EF476F] transition-colors">
-          {product.title}
+          {title}
         </span>
-        <span className="text-xs font-bold text-[#EF476F]">{product.price}</span>
+        <span className="text-xs font-bold text-[#EF476F]">{price}</span>
       </div>
       <div className="flex justify-between items-center text-[10px] text-[#737373] mt-1">
-        <span>{product.sub}</span>
+        <span>{sub}</span>
         <span className="flex items-center gap-1">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="#EF476F" stroke="#EF476F" strokeWidth="1">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-          {product.rating}
+          {rating}
         </span>
       </div>
     </Link>
@@ -151,6 +124,17 @@ function Pagination() {
 }
 
 export default function CatalogGrid() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    productsApi
+      .list()
+      .then((res) => setProducts(res.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <>
       <section className="px-8 pt-12 pb-6">
@@ -219,9 +203,17 @@ export default function CatalogGrid() {
 
         <div className="lg:col-span-9">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.title} product={product} />
-            ))}
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="w-full aspect-[3/4] bg-[#282826] rounded-2xl mb-3" />
+                    <div className="h-3 bg-[#282826] rounded w-3/4 mb-2" />
+                    <div className="h-3 bg-[#282826] rounded w-1/2" />
+                  </div>
+                ))
+              : products.map((product) => (
+                  <ProductCard key={product.id || product.name} product={product} />
+                ))}
 
             <div className="md:col-span-2 w-full aspect-auto bg-[#282826] rounded-2xl p-6 flex flex-col justify-center items-center min-h-[250px] relative">
               <div className="flex flex-col items-center justify-center text-center my-auto">

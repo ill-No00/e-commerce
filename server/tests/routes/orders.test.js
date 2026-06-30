@@ -111,24 +111,50 @@ describe("POST /api/orders", () => {
 
   test("success — places order and returns 201", async () => {
     const order = createMockOrder();
-    mockSupabase.from
-      .mockReturnValueOnce({
-        insert: () => ({
+    mockSupabase.from.mockImplementation((table) => {
+      if (table === "products") {
+        return {
           select: () => ({
-            single: () => Promise.resolve({ data: order, error: null }),
+            eq: () => ({
+              single: () => Promise.resolve({ data: { product_variants: [{ price_cents: 8900 }] }, error: null }),
+            }),
           }),
-        }),
-      })
-      .mockReturnValueOnce({
-        insert: () => Promise.resolve({ error: null }),
-      })
-      .mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        };
+      }
+      if (table === "shipping_methods") {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: { price_cents: 0 }, error: null }),
+            }),
           }),
-        }),
-      });
+        };
+      }
+      if (table === "orders") {
+        return {
+          insert: () => ({
+            select: () => ({
+              single: () => Promise.resolve({ data: order, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === "order_items") {
+        return {
+          insert: () => Promise.resolve({ error: null }),
+        };
+      }
+      if (table === "carts") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: () => Promise.resolve({ data: null, error: null }),
+            }),
+          }),
+        };
+      }
+      return {};
+    });
 
     const res = await request(app)
       .post("/api/orders")

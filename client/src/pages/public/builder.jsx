@@ -180,7 +180,10 @@ export default function BuilderPage() {
                 </svg>
               </button>
             ) : (
-              <button className="text-[11px] font-black tracking-widest uppercase px-8 py-3 rounded-full bg-[#ff2d78] text-white hover:brightness-110 transition-all flex items-center gap-2">
+              <button
+                onClick={() => navigate("/cart")}
+                className="text-[11px] font-black tracking-widest uppercase px-8 py-3 rounded-full bg-[#ff2d78] text-white hover:brightness-110 transition-all flex items-center gap-2"
+              >
                 PROCEED TO DEPLOYMENT
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />

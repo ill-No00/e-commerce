@@ -6,7 +6,8 @@ let serviceClient = null;
 
 export function getSupabase() {
   if (!client) {
-    client = createClient(config.supabase.url, config.supabase.anonKey);
+    client = createClient(config.supabase.url, config.supabase.key);
+    
   }
   return client;
 }

@@ -1,8 +1,30 @@
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { adminApi } from "../../api/admin.js";
 import MetricsRow from "../../components/admin/MetricsRow";
 import RevenueAndFeed from "../../components/admin/RevenueAndFeed";
 import PerformanceHero from "../../components/admin/PerformanceHero";
 
 export default function AdminOverview() {
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminApi
+      .dashboard()
+      .then((res) => setDashboard(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 size={20} className="text-[#ff2d78] animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex justify-between items-center mb-8 pb-4 border-b border-neutral-900">
@@ -37,8 +59,8 @@ export default function AdminOverview() {
         </div>
       </div>
 
-      <MetricsRow />
-      <RevenueAndFeed />
+      <MetricsRow stats={dashboard?.stats} />
+      <RevenueAndFeed activityLog={dashboard?.activityLog || []} />
       <PerformanceHero />
     </>
   );

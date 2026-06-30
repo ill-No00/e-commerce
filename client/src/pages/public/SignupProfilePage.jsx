@@ -2,8 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../store/auth.jsx";
 import { Camera, Loader2 } from "lucide-react";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+import { profileApi } from "../../api/profile.js";
 
 const STANCES = [
   { value: "REGULAR", label: "REGULAR" },
@@ -47,7 +46,6 @@ export default function SignupProfilePage() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("4wheels_token");
       const body = {};
 
       if (stance) body.stance = stance;
@@ -55,19 +53,7 @@ export default function SignupProfilePage() {
       if (tier) body.tier = tier;
 
       if (Object.keys(body).length > 0) {
-        const res = await fetch(`${API}/profile`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        });
-
-        if (!res.ok) {
-          const json = await res.json();
-          throw new Error(json.error || "Failed to update profile");
-        }
+        await profileApi.update(body);
       }
 
       navigate("/account", { replace: true });

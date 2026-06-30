@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { adminApi } from "../../api/admin.js";
 
 const tabs = ["STORE INFO", "NOTIFICATIONS", "INTEGRATIONS", "BUILDER CONFIG", "DANGER ZONE"];
 
@@ -48,6 +50,21 @@ function Toggle({ on }) {
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(0);
+  const [settings, setSettings] = useState(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  useEffect(() => {
+    adminApi
+      .settings()
+      .then((res) => setSettings(res.data))
+      .catch(() => {})
+      .finally(() => setLoadingSettings(false));
+  }, []);
+
+  const storeInfo = settings?.storeInfo || {};
+  const notifPrefs = settings?.notificationPrefs || {};
+  const integrationList = settings?.integrations || integrations;
+  const builderCfg = settings?.builderConfig || {};
 
   return (
     <div className="flex gap-8">

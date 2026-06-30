@@ -3,6 +3,16 @@ import { z } from "zod";
 import { getSupabase } from "../config/supabase.js";
 import { requireAuth, optionalAuth } from "../middleware/auth.js";
 
+async function checkCrewMembership(supabase, userId, crewId) {
+  const { data } = await supabase
+    .from("crew_members")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("crew_id", crewId)
+    .maybeSingle();
+  return !!data;
+}
+
 const router = Router();
 
 router.use(requireAuth);
@@ -68,9 +78,11 @@ router.get("/:crewId/members", async (req, res, next) => {
   }
 });
 
-router.get("/:crewId/posts", optionalAuth, async (req, res, next) => {
+router.get("/:crewId/posts", requireAuth, async (req, res, next) => {
   try {
     const supabase = getSupabase();
+    const isMember = await checkCrewMembership(supabase, req.userId, req.params.crewId);
+    if (!isMember) return res.status(403).json({ error: "You must be a crew member to view posts" });
     const first = Math.min(50, parseInt(req.query.first, 10) || 10);
 
     const { data, error } = await supabase
@@ -107,6 +119,8 @@ router.post("/posts", async (req, res, next) => {
   try {
     const body = postSchema.parse(req.body);
     const supabase = getSupabase();
+    const isMember = await checkCrewMembership(supabase, req.userId, body.crew_id);
+    if (!isMember) return res.status(403).json({ error: "You must be a crew member to post" });
 
     const { data, error } = await supabase
       .from("crew_posts")
@@ -213,6 +227,8 @@ router.post("/posts/:id/comments", async (req, res, next) => {
 router.get("/:crewId/chat", async (req, res, next) => {
   try {
     const supabase = getSupabase();
+    const isMember = await checkCrewMembership(supabase, req.userId, req.params.crewId);
+    if (!isMember) return res.status(403).json({ error: "You must be a crew member to view chat" });
     const first = Math.min(100, parseInt(req.query.first, 10) || 50);
 
     const { data, error } = await supabase
@@ -241,6 +257,8 @@ router.post("/chat", async (req, res, next) => {
   try {
     const body = chatSchema.parse(req.body);
     const supabase = getSupabase();
+    const isMember = await checkCrewMembership(supabase, req.userId, body.crew_id);
+    if (!isMember) return res.status(403).json({ error: "You must be a crew member to chat" });
 
     const { data, error } = await supabase
       .from("crew_chat_messages")

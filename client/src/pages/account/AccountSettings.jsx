@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { Plus, Edit2, Trash2, CreditCard, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Edit2, Trash2, CreditCard, MapPin, Loader2 } from "lucide-react";
+import { profileApi } from "../../api/profile.js";
+import { addressesApi } from "../../api/addresses.js";
+import { paymentMethodsApi } from "../../api/paymentMethods.js";
 
 const tabs = ["PROFILE", "PASSWORD_&_SECURITY", "ADDRESSES", "NOTIFICATIONS", "PAYMENT_METHODS"];
 
@@ -41,6 +44,59 @@ function Toggle({ on }) {
 
 export default function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState(0);
+  const [profile, setProfile] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [loadingAcct, setLoadingAcct] = useState(true);
+  const [formData, setFormData] = useState({});
+
+  useEffect(() => {
+    Promise.all([
+      profileApi.get().catch(() => ({ data: {} })),
+      addressesApi.list().catch(() => ({ data: [] })),
+      paymentMethodsApi.list().catch(() => ({ data: [] })),
+    ]).then(([p, a, pm]) => {
+      const prof = p.data || {};
+      setProfile(prof);
+      setFormData({
+        display_name: prof.display_name || "",
+        username: prof.username || "",
+        bio: prof.bio || "",
+        home_spot: prof.home_spot || "",
+        stance: prof.stance || "",
+        tier: prof.tier || "",
+      });
+      setAddresses(a.data || []);
+      setPaymentMethods(pm.data || []);
+    }).finally(() => setLoadingAcct(false));
+  }, []);
+
+  const savedAddresses = addresses.length > 0
+    ? addresses.map((a, i) => ({
+        label: a.label || (a.address_type || "ADDRESS").toUpperCase(),
+        address: [a.street, a.city, a.state, a.zip].filter(Boolean).join(", "),
+        default: a.is_default || i === 0,
+      }))
+    : [{ label: "HOME", address: "456 Oak St, Los Angeles, CA 90013", default: true },
+       { label: "WORK", address: "789 Sunset Blvd, Ste 200, Los Angeles, CA 90028", default: false }];
+
+  const savedCards = paymentMethods.length > 0
+    ? paymentMethods.map((pm) => ({
+        brand: pm.card_brand || "VISA",
+        last4: pm.last4 || "0000",
+        expiry: pm.expiry_month && pm.expiry_year ? `${pm.expiry_month}/${pm.expiry_year.toString().slice(-2)}` : "06/27",
+        default: pm.is_default || false,
+      }))
+    : [{ brand: "VISA", last4: "4242", expiry: "06/27", default: true },
+       { brand: "MASTERCARD", last4: "8888", expiry: "12/28", default: false }];
+
+  if (loadingAcct) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 size={20} className="text-[#ff2d78] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -70,39 +126,49 @@ export default function AccountSettingsPage() {
           <div className="flex flex-col xs:flex-row items-center xs:items-start gap-4 mb-6 pb-6 border-b border-[#2a2a2a] text-center xs:text-left">
             <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#2a2a2a] ring-2 ring-[#ff2d78] shrink-0" />
             <div>
-              <div className="text-sm md:text-base font-black text-white uppercase">ALEX_RIDER</div>
+              <div className="text-sm md:text-base font-black text-white uppercase">{profile?.display_name || "RIDER"}</div>
               <button className="text-[9px] font-bold text-[#ff2d78] uppercase tracking-widest hover:underline">CHANGE_PHOTO</button>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
             <div>
               <label className="text-[9px] font-bold text-[#888] uppercase tracking-widest block mb-1.5 md:mb-2">DISPLAY_NAME</label>
-              <input defaultValue="Alex Rider" className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none" />
+              <input value={formData.display_name} onChange={(e) => setFormData({...formData, display_name: e.target.value})} className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none" />
             </div>
             <div>
               <label className="text-[9px] font-bold text-[#888] uppercase tracking-widest block mb-1.5 md:mb-2">USERNAME</label>
-              <input defaultValue="@alexrider" className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none" />
+              <input value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none" />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
             <div>
               <label className="text-[9px] font-bold text-[#888] uppercase tracking-widest block mb-1.5 md:mb-2">EMAIL</label>
-              <input defaultValue="alex@4wheels.com" className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none" />
+              <input defaultValue={profile?.email || "rider@4wheels.com"} disabled className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white/60 px-3 md:px-4 py-2.5 md:py-3 outline-none cursor-not-allowed" />
             </div>
             <div>
               <label className="text-[9px] font-bold text-[#888] uppercase tracking-widest block mb-1.5 md:mb-2">STANCE</label>
-              <select className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none">
-                <option>GOOFY</option>
-                <option>REGULAR</option>
+              <select value={formData.stance} onChange={(e) => setFormData({...formData, stance: e.target.value})} className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none">
+                <option value="">SELECT STANCE</option>
+                <option value="GOOFY">GOOFY</option>
+                <option value="REGULAR">REGULAR</option>
+                <option value="SWITCH">SWITCH</option>
               </select>
             </div>
           </div>
           <div className="mb-4 md:mb-6">
             <label className="text-[9px] font-bold text-[#888] uppercase tracking-widest block mb-1.5 md:mb-2">HOME_SPOT</label>
-            <input defaultValue="East Side Plaza" className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none" />
+            <input value={formData.home_spot} onChange={(e) => setFormData({...formData, home_spot: e.target.value})} className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 md:px-4 py-2.5 md:py-3 outline-none" />
           </div>
           <div className="text-right">
-            <button className="bg-[#ff2d78] text-white text-[9px] md:text-[10px] font-black tracking-widest uppercase px-5 md:px-6 py-2.5 md:py-3 rounded-full hover:brightness-110 transition-all">
+            <button
+              onClick={() => profileApi.update({
+                display_name: formData.display_name,
+                username: formData.username,
+                stance: formData.stance || null,
+                home_spot: formData.home_spot || null,
+              })}
+              className="bg-[#ff2d78] text-white text-[9px] md:text-[10px] font-black tracking-widest uppercase px-5 md:px-6 py-2.5 md:py-3 rounded-full hover:brightness-110 transition-all"
+            >
               SAVE_CHANGES
             </button>
           </div>

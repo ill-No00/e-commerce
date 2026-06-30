@@ -1,21 +1,9 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { cartApi } from "../../api/cart.js";
+import { Loader2 } from "lucide-react";
 
-const cartItems = [
-  {
-    title: "CONCRETE RIPPER V2",
-    meta: '8.25" / DECK ONLY',
-    price: "$65.00",
-    quantity: 1,
-  },
-  {
-    title: "STREET CREW 52MM",
-    meta: "99A / SET OF 4",
-    price: "$45.00",
-    quantity: 1,
-  },
-];
-
-function CartLineItem({ item }) {
+function CartLineItem({ item, onUpdateQuantity, onRemove }) {
   return (
     <div className="bg-[#171717] border border-neutral-900 rounded-2xl p-5 flex items-center justify-between gap-4">
       <div className="flex items-center gap-5 min-w-0">
@@ -31,20 +19,31 @@ function CartLineItem({ item }) {
       </div>
 
       <div className="flex items-center bg-[#121212] border border-neutral-800 rounded-xl px-3 py-1.5 gap-4 flex-shrink-0">
-        <button className="text-xs text-[#737373] hover:text-white transition-colors cursor-pointer" aria-label="Decrease quantity">
+        <button
+          onClick={() => onUpdateQuantity(Math.max(1, item.quantity - 1))}
+          className="text-xs text-[#737373] hover:text-white transition-colors cursor-pointer"
+          aria-label="Decrease quantity"
+        >
           −
         </button>
         <span className="text-xs font-bold text-white min-w-[12px] text-center">
           {item.quantity}
         </span>
-        <button className="text-xs text-[#737373] hover:text-white transition-colors cursor-pointer" aria-label="Increase quantity">
+        <button
+          onClick={() => onUpdateQuantity(item.quantity + 1)}
+          className="text-xs text-[#737373] hover:text-white transition-colors cursor-pointer"
+          aria-label="Increase quantity"
+        >
           +
         </button>
       </div>
 
       <div className="flex flex-col items-end justify-between h-20 flex-shrink-0">
         <span className="text-sm font-bold text-white">{item.price}</span>
-        <button className="text-[9px] font-bold text-[#737373] tracking-wider uppercase hover:text-[#EF476F] transition-colors cursor-pointer flex items-center gap-1">
+        <button
+          onClick={onRemove}
+          className="text-[9px] font-bold text-[#737373] tracking-wider uppercase hover:text-[#EF476F] transition-colors cursor-pointer flex items-center gap-1"
+        >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -57,27 +56,87 @@ function CartLineItem({ item }) {
 }
 
 export default function CartContent() {
-  const subtotal = 110.0;
-  const shipping = 12.0;
-  const tax = 9.35;
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    cartApi
+      .get()
+      .then((res) => setCart(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleUpdateQuantity = async (itemId, newQty) => {
+    try {
+      await cartApi.updateItem(itemId, newQty);
+      setCart(prev => ({
+        ...prev,
+        cart_items: prev.cart_items.map(ci =>
+          ci.id === itemId ? { ...ci, quantity: newQty } : ci
+        ),
+      }));
+    } catch {}
+  };
+
+  const handleRemoveItem = async (itemId) => {
+    try {
+      await cartApi.removeItem(itemId);
+      setCart(prev => ({
+        ...prev,
+        cart_items: prev.cart_items.filter(ci => ci.id !== itemId),
+      }));
+    } catch {}
+  };
+
+  const items = cart?.cart_items || [];
+  const subtotal = items.reduce((sum, item) => sum + (item.unit_price_cents * item.quantity) / 100, 0);
+  const shipping = subtotal >= 150 ? 0 : 12;
+  const tax = subtotal * 0.085;
   const total = subtotal + shipping + tax;
+
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 size={20} className="text-[#ff2d78] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>
       <section className="px-8 pt-12 pb-6">
-        <h1 className="text-5xl font-black uppercase text-[#F8F9FA] tracking-tighter">
+        <h1 className="text-5xl font-black text-[#F8F9FA] tracking-tighter">
           YOUR BAG
         </h1>
         <span className="text-[10px] text-[#EF476F] font-bold uppercase tracking-widest mt-1 block">
-          ITEMS ARE RESERVED FOR 30 MINUTES
+          {items.length} ITEM{items.length !== 1 ? "S" : ""}
         </span>
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-8 py-4 items-start">
         <div className="lg:col-span-8 flex flex-col gap-4">
-          {cartItems.map((item) => (
-            <CartLineItem key={item.title} item={item} />
+          {items.map((item) => (
+            <CartLineItem
+              key={item.id}
+              item={{
+                title: item.product_variants?.products?.name || item.product_name || "Product",
+                meta: item.product_variants?.size_label || item.variant_label || "",
+                price: `$${((item.unit_price_cents * item.quantity) / 100).toFixed(2)}`,
+                quantity: item.quantity,
+              }}
+              onUpdateQuantity={(newQty) => handleUpdateQuantity(item.id, newQty)}
+              onRemove={() => handleRemoveItem(item.id)}
+            />
           ))}
+          {items.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-[#888] text-xs uppercase tracking-widest">Your bag is empty</p>
+              <Link to="/shop" className="inline-block mt-4 text-[#ff2d78] text-xs font-bold uppercase tracking-widest hover:underline">
+                CONTINUE SHOPPING
+              </Link>
+            </div>
+          )}
         </div>
 
         <aside className="lg:col-span-4 lg:sticky lg:top-28">
@@ -93,7 +152,7 @@ export default function CartContent() {
               </div>
               <div className="flex justify-between items-center text-[#737373]">
                 <span>ESTIMATED SHIPPING</span>
-                <span className="font-bold text-white">${shipping.toFixed(2)}</span>
+                <span className="font-bold text-white">{shipping === 0 ? "FREE" : `$${shipping.toFixed(2)}`}</span>
               </div>
               <div className="flex justify-between items-center text-[#737373]">
                 <span>SALES TAX</span>

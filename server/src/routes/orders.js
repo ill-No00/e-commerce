@@ -85,6 +85,7 @@ const placeOrderSchema = z.object({
   items: z.array(z.object({
     product_name: z.string(),
     variant_label: z.string().optional(),
+    variant_id: z.string().uuid().optional(),
     quantity: z.number().int().min(1),
     unit_price_cents: z.number().int().min(0),
   })).min(1),
@@ -94,9 +95,73 @@ router.post("/", async (req, res, next) => {
   try {
     const body = placeOrderSchema.parse(req.body);
 
-    const orderNumber = `4W-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-
     const supabase = getSupabase();
+
+    // Validate item prices against DB
+    const priceMismatches = [];
+    for (const item of body.items) {
+      let dbPrice;
+      if (item.variant_id) {
+        const { data: variant } = await supabase
+          .from("product_variants")
+          .select("price_cents")
+          .eq("id", item.variant_id)
+          .single();
+        dbPrice = variant?.price_cents;
+      } else {
+        const { data: product } = await supabase
+          .from("products")
+          .select("product_variants(price_cents)")
+          .eq("name", item.product_name)
+          .single();
+        dbPrice = product?.product_variants?.[0]?.price_cents;
+      }
+      if (dbPrice !== item.unit_price_cents) {
+        priceMismatches.push({
+          product_name: item.product_name,
+          submitted: item.unit_price_cents,
+          expected: dbPrice,
+        });
+      }
+    }
+    if (priceMismatches.length > 0) {
+      return res.status(400).json({ error: "Price mismatch", details: priceMismatches });
+    }
+
+    // Validate subtotal
+    const validatedSubtotal = body.items.reduce((sum, item) => {
+      const dbItem = body.items.find((i) => i.product_name === item.product_name);
+      return sum + item.unit_price_cents * item.quantity;
+    }, 0);
+    if (validatedSubtotal !== body.subtotal_cents) {
+      return res.status(400).json({ error: "Price mismatch", details: [{ field: "subtotal_cents", submitted: body.subtotal_cents, expected: validatedSubtotal }] });
+    }
+
+    // Validate shipping
+    const { data: shippingMethod } = await supabase
+      .from("shipping_methods")
+      .select("price_cents")
+      .eq("id", body.shipping_method_id)
+      .single();
+    const validatedShipping = shippingMethod?.price_cents;
+    if (validatedShipping !== body.shipping_cents) {
+      return res.status(400).json({ error: "Price mismatch", details: [{ field: "shipping_cents", submitted: body.shipping_cents, expected: validatedShipping }] });
+    }
+
+    // Validate tax (8.5% with 5-cent tolerance)
+    const validatedTax = Math.round(validatedSubtotal * 0.085);
+    if (Math.abs(validatedTax - body.tax_cents) > 5) {
+      return res.status(400).json({ error: "Price mismatch", details: [{ field: "tax_cents", submitted: body.tax_cents, expected: validatedTax }] });
+    }
+
+    // Validate total — use body.tax_cents (already validated within 5-cent tolerance)
+    // so the total check uses the same tax figure the client used
+    const validatedTotal = validatedSubtotal + validatedShipping + body.tax_cents;
+    if (validatedTotal !== body.total_cents) {
+      return res.status(400).json({ error: "Price mismatch", details: [{ field: "total_cents", submitted: body.total_cents, expected: validatedTotal }] });
+    }
+
+    const orderNumber = `4W-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
     const { data: order, error: orderError } = await supabase
       .from("orders")

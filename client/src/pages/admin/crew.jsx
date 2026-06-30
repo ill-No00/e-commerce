@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { adminApi } from "../../api/admin.js";
 import Pagination from "../../components/admin/Pagination";
 import Modal from "../../components/admin/Modal";
 
@@ -26,6 +28,24 @@ const roleStyles = {
 
 export default function CrewPage() {
   const [showInvite, setShowInvite] = useState(false);
+  const [apiStaff, setApiStaff] = useState(null);
+  const [loadingStaff, setLoadingStaff] = useState(true);
+
+  useEffect(() => {
+    adminApi
+      .staff()
+      .then((res) => setApiStaff(res.data))
+      .catch(() => {})
+      .finally(() => setLoadingStaff(false));
+  }, []);
+
+  const staffList = apiStaff ?? members;
+  const activeStaff = staffList.filter((s) => s.active !== false);
+  const roleStats = [
+    { label: "ADMIN", count: activeStaff.filter((s) => s.role === "ADMIN").length, desc: "Full access", color: "text-[#ff2d78]" },
+    { label: "FULFILLMENT", count: activeStaff.filter((s) => s.role === "FULFILLMENT").length, desc: "Orders & inventory", color: "text-[#a78bfa]" },
+    { label: "VIEWER", count: activeStaff.filter((s) => s.role === "VIEWER").length, desc: "Read-only access", color: "text-[#888]" },
+  ];
 
   return (
     <>
@@ -69,7 +89,7 @@ export default function CrewPage() {
             </tr>
           </thead>
           <tbody>
-            {members.map((m, i) => (
+            {staffList.map((m, i) => (
               <tr key={m.username} className={i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#141414]"}>
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">

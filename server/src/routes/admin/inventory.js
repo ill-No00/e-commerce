@@ -21,7 +21,7 @@ router.get("/", async (req, res, next) => {
       .from("products")
       .select(`
         id, name, slug, base_price_cents, is_active,
-        categories(name),
+        categories!inner(name),
         product_variants(id, sku, stock_status, stock_quantity, finish_name, size_label, price_cents)
       `, { count: "exact" })
       .order("created_at", { ascending: false })

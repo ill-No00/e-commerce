@@ -16,7 +16,7 @@ router.get("/", async (req, res, next) => {
       .from("products")
       .select(`
         id, name, slug, badge, base_price_cents, rating_avg, rating_count, is_active,
-        category:categories(name, slug),
+        category:categories!inner(name, slug),
         product_images(url, alt_text),
         product_variants(id, width, size_label, durometer, finish_name, finish_hex, price_cents, stock_status, is_default)
       `, { count: "exact" })
@@ -25,7 +25,7 @@ router.get("/", async (req, res, next) => {
       .range(from, to);
 
     if (category) {
-      query = query.eq("categories.slug", category);
+      query = query.eq("category.slug", category);
     }
 
     if (search) {

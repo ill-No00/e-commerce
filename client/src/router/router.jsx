@@ -1,5 +1,5 @@
-import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
-import { AuthProvider } from "../store/auth.jsx";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import AuthLayout from "../components/layouts/authLayout.jsx";
 import PublicLayout from "../components/layouts/publicLayout.jsx";
 import AdminLayout from "../components/layouts/adminLayout.jsx";
 import UserLayout from "../components/layouts/userLayout.jsx";
@@ -27,14 +27,6 @@ import AccountSettings from "../pages/account/AccountSettings.jsx";
 import AccountWishlist from "../pages/account/AccountWishlist.jsx";
 import RequireAuth from "../guards/requireAuth.jsx";
 import RequireAdmin from "../guards/requireAdmin.jsx";
-
-function AuthLayout() {
-  return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
-  );
-}
 
 export const router = createBrowserRouter([
   {
@@ -84,7 +76,7 @@ export const router = createBrowserRouter([
         path: "/dashboard",
         element: <RequireAuth><UserLayout /></RequireAuth>,
         errorElement: <ErrorPage />,
-        children: [{}, {}, {}],
+        children: [],
       },
     ],
   },

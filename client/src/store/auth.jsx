@@ -1,6 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useCallback } from "react";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+import { authApi } from "../api/auth.js";
 
 const AuthContext = createContext(null);
 
@@ -32,13 +31,8 @@ export function AuthProvider({ children }) {
       dispatch({ type: "LOGOUT" });
       return;
     }
-    fetch(`${API}/auth/session`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("invalid");
-        return res.json();
-      })
+    authApi
+      .getSession()
       .then((json) => {
         dispatch({ type: "SET_SESSION", user: json.user, session: { access_token: token } });
       })
@@ -48,43 +42,43 @@ export function AuthProvider({ children }) {
       });
   }, []);
 
+  useEffect(() => {
+    const handler = () => dispatch({ type: "LOGOUT" });
+    window.addEventListener("auth:logout", handler);
+    return () => window.removeEventListener("auth:logout", handler);
+  }, []);
+
   const login = useCallback(async (email, password) => {
     dispatch({ type: "LOADING" });
-    const res = await fetch(`${API}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Login failed");
-    localStorage.setItem("4wheels_token", json.session.access_token);
-    dispatch({ type: "SET_SESSION", user: json.user, session: json.session });
-    return json;
+    try {
+      const json = await authApi.login(email, password);
+      localStorage.setItem("4wheels_token", json.session.access_token);
+      dispatch({ type: "SET_SESSION", user: json.user, session: json.session });
+      return json;
+    } catch (err) {
+      dispatch({ type: "LOGOUT" });
+      throw new Error(err.response?.data?.error || "Login failed");
+    }
   }, []);
 
   const signup = useCallback(async (email, password, options) => {
     dispatch({ type: "LOADING" });
-    const res = await fetch(`${API}/auth/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, options }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Signup failed");
-    if (json.session) {
-      localStorage.setItem("4wheels_token", json.session.access_token);
+    try {
+      const json = await authApi.signup(email, password, options);
+      if (json.session) {
+        localStorage.setItem("4wheels_token", json.session.access_token);
+      }
+      dispatch({ type: "SET_SESSION", user: json.user, session: json.session });
+      return json;
+    } catch (err) {
+      dispatch({ type: "LOGOUT" });
+      throw new Error(err.response?.data?.error || "Signup failed");
     }
-    dispatch({ type: "SET_SESSION", user: json.user, session: json.session });
-    return json;
   }, []);
 
   const logout = useCallback(async () => {
-    const token = localStorage.getItem("4wheels_token");
     try {
-      await fetch(`${API}/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await authApi.logout();
     } catch {}
     localStorage.removeItem("4wheels_token");
     dispatch({ type: "LOGOUT" });

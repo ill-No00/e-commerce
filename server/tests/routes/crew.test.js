@@ -20,6 +20,23 @@ function setupAuth() {
   mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser }, error: null });
 }
 
+function mockFromWithMembership(mainMock, isMember = true) {
+  mockSupabase.from.mockImplementation((table) => {
+    if (table === "crew_members") {
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              maybeSingle: () => Promise.resolve({ data: isMember ? { id: "member-1" } : null, error: null }),
+            }),
+          }),
+        }),
+      };
+    }
+    return mainMock;
+  });
+}
+
 function makeFromChain(result) {
   return jest.fn(() => ({
     select: () => ({
@@ -146,7 +163,7 @@ describe("GET /api/crew/:crewId/posts", () => {
     setupAuth();
     const post = createMockCrewPost();
     const result = { data: [post], error: null };
-    mockSupabase.from.mockReturnValue({
+    mockFromWithMembership({
       select: () => ({
         eq: () => ({
           order: () => ({
@@ -164,7 +181,7 @@ describe("GET /api/crew/:crewId/posts", () => {
     mockSupabase.resetAll();
     setupAuth();
     const result = { data: [], error: null };
-    mockSupabase.from.mockReturnValue({
+    mockFromWithMembership({
       select: () => ({
         eq: () => ({
           order: () => ({
@@ -178,6 +195,14 @@ describe("GET /api/crew/:crewId/posts", () => {
       .set("Authorization", `Bearer ${validToken}`);
     expect(res.status).toBe(200);
   });
+
+  it("returns 403 when not a crew member", async () => {
+    mockSupabase.resetAll();
+    setupAuth();
+    mockFromWithMembership({}, false);
+    const res = await request(app).get(`/api/crew/${crewId}/posts`).set("Authorization", `Bearer ${validToken}`);
+    expect(res.status).toBe(403);
+  });
 });
 
 describe("POST /api/crew/posts", () => {
@@ -187,7 +212,7 @@ describe("POST /api/crew/posts", () => {
   });
 
   it("returns 201 on successful post creation", async () => {
-    mockSupabase.from.mockImplementation(makeFromChain({ data: createMockCrewPost(), error: null }));
+    mockFromWithMembership(makeFromChain({ data: createMockCrewPost(), error: null })());
     const res = await request(app)
       .post("/api/crew/posts")
       .set("Authorization", `Bearer ${validToken}`)
@@ -217,6 +242,15 @@ describe("POST /api/crew/posts", () => {
       .set("Authorization", `Bearer ${validToken}`)
       .send({ crew_id: crewId, body: "Hello", media_type: "GIF" });
     expect(res.status).toBe(400);
+  });
+
+  it("returns 403 when not a crew member", async () => {
+    mockFromWithMembership({}, false);
+    const res = await request(app)
+      .post("/api/crew/posts")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ crew_id: crewId, body: "Session was rad!" });
+    expect(res.status).toBe(403);
   });
 });
 
@@ -335,7 +369,7 @@ describe("GET /api/crew/:crewId/chat", () => {
     mockSupabase.resetAll();
     setupAuth();
     const result = { data: [{ id: "msg-1", body: "Yo!", created_at: "2026-01-01T00:00:00Z" }], error: null };
-    mockSupabase.from.mockReturnValue({
+    mockFromWithMembership({
       select: () => ({
         eq: () => ({
           order: () => ({
@@ -348,6 +382,14 @@ describe("GET /api/crew/:crewId/chat", () => {
     expect(res.status).toBe(200);
     expect(res.body.data[0].body).toBe("Yo!");
   });
+
+  it("returns 403 when not a crew member", async () => {
+    mockSupabase.resetAll();
+    setupAuth();
+    mockFromWithMembership({}, false);
+    const res = await request(app).get(`/api/crew/${crewId}/chat`).set("Authorization", `Bearer ${validToken}`);
+    expect(res.status).toBe(403);
+  });
 });
 
 describe("POST /api/crew/chat", () => {
@@ -357,7 +399,7 @@ describe("POST /api/crew/chat", () => {
   });
 
   it("returns 201 on message sent", async () => {
-    mockSupabase.from.mockImplementation(makeFromChain({ data: { id: "msg-1", body: "Yo!", crew_id: crewId }, error: null }));
+    mockFromWithMembership(makeFromChain({ data: { id: "msg-1", body: "Yo!", crew_id: crewId }, error: null })());
     const res = await request(app)
       .post("/api/crew/chat")
       .set("Authorization", `Bearer ${validToken}`)
@@ -371,6 +413,15 @@ describe("POST /api/crew/chat", () => {
       .set("Authorization", `Bearer ${validToken}`)
       .send({ crew_id: crewId });
     expect(res.status).toBe(400);
+  });
+
+  it("returns 403 when not a crew member", async () => {
+    mockFromWithMembership({}, false);
+    const res = await request(app)
+      .post("/api/crew/chat")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ crew_id: crewId, body: "Yo!" });
+    expect(res.status).toBe(403);
   });
 });
 

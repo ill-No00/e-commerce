@@ -1,21 +1,45 @@
-import { useState } from "react";
-import { Heart, ShoppingBag, X, Share2, Package } from "lucide-react";
-
-const wishlistItems = [
-  { category: "DECK", name: "OBSIDIAN SERIES V.2", price: "$94.00", stock: "IN_STOCK", stockColor: "text-[#22c55e]" },
-  { category: "WHEELS", name: "STREET GRIP WHEELS 54MM", price: "$45.00", stock: "IN_STOCK", stockColor: "text-[#22c55e]" },
-  { category: "TRUCKS", name: "TITANIUM KINGPINS V3", price: "$78.00", stock: "LOW_STOCK", stockColor: "text-[#f59e0b]" },
-  { category: "BEARINGS", name: "CERAMIC SPEED BEARINGS", price: "$62.00", stock: "IN_STOCK", stockColor: "text-[#22c55e]" },
-  { category: "HARDWARE", name: "HEX DRIVE BOLT SET", price: "$12.00", stock: "IN_STOCK", stockColor: "text-[#22c55e]" },
-  { category: "GRIP TAPE", name: "OBSIDIAN GRIP TAPE 9\"", price: "$18.00", stock: "OUT_OF_STOCK", stockColor: "text-[#ef4444]" },
-];
+import { useState, useEffect } from "react";
+import { Heart, ShoppingBag, X, Share2, Package, Loader2 } from "lucide-react";
+import { wishlistApi } from "../../api/wishlist.js";
 
 export default function AccountWishlist() {
-  const [items, setItems] = useState(wishlistItems);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const removeItem = (i) => {
-    setItems((prev) => prev.filter((_, idx) => idx !== i));
+  useEffect(() => {
+    wishlistApi
+      .list()
+      .then((res) => setItems(res.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const removeItem = async (i) => {
+    const item = items[i];
+    try {
+      await wishlistApi.remove(item.id);
+      setItems((prev) => prev.filter((_, idx) => idx !== i));
+    } catch {}
   };
+
+  function mapItem(item) {
+    const v = item.product_variants || {};
+    const p = v.products || {};
+    const priceCents = v.price_cents || 0;
+    const stock = v.stock_status || "IN_STOCK";
+    const stockColor =
+      stock === "OUT_OF_STOCK" ? "text-[#ef4444]" :
+      stock === "LOW_STOCK" ? "text-[#f59e0b]" :
+      "text-[#22c55e]";
+    return {
+      id: item.id,
+      category: p.slug?.split("-")[0]?.toUpperCase() || "ITEM",
+      name: p.name || "Product",
+      price: `$${(priceCents / 100).toFixed(2)}`,
+      stock,
+      stockColor,
+    };
+  }
 
   return (
     <div>
@@ -40,10 +64,16 @@ export default function AccountWishlist() {
         </div>
       </div>
 
-      {items.length > 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={20} className="text-[#ff2d78] animate-spin" />
+        </div>
+      ) : items.length > 0 ? (
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {items.map((item, i) => (
-            <div key={i} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden group">
+          {items.map((item, i) => {
+            const mapped = mapItem(item);
+            return (
+            <div key={item.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden group">
               <div className="relative">
                 <div className="h-28 md:h-36 bg-[#111] flex items-center justify-center">
                   <Package size={28} className="md:hidden text-[#333]" />
@@ -57,14 +87,14 @@ export default function AccountWishlist() {
                   <Heart size={14} className="hidden md:block text-[#ff2d78] fill-[#ff2d78]" />
                 </button>
                 <span className="absolute top-2 md:top-3 left-2 md:left-3 text-[7px] md:text-[8px] font-bold text-[#666] bg-[#0d0d0d]/80 rounded-full px-2 md:px-2.5 py-0.5 md:py-1 uppercase tracking-wider">
-                  {item.category}
+                  {mapped.category}
                 </span>
               </div>
               <div className="p-3 md:p-4">
-                <div className="text-[10px] md:text-xs font-black text-white uppercase tracking-tight leading-tight mb-1">{item.name}</div>
+                <div className="text-[10px] md:text-xs font-black text-white uppercase tracking-tight leading-tight mb-1">{mapped.name}</div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] md:text-xs font-black text-[#ff2d78]">{item.price}</span>
-                  <span className={`text-[8px] md:text-[9px] font-bold ${item.stockColor}`}>{item.stock}</span>
+                  <span className="text-[10px] md:text-xs font-black text-[#ff2d78]">{mapped.price}</span>
+                  <span className={`text-[8px] md:text-[9px] font-bold ${mapped.stockColor}`}>{mapped.stock}</span>
                 </div>
                 <div className="flex gap-1.5 md:gap-2">
                   <button className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 bg-[#ff2d78] text-white text-[8px] md:text-[9px] font-black tracking-widest uppercase rounded-full py-2 md:py-2.5 hover:brightness-110 transition-all">
@@ -82,7 +112,8 @@ export default function AccountWishlist() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 md:py-20">

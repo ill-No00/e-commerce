@@ -1,25 +1,25 @@
-const metrics = [
-  {
-    label: "TOTAL SALES",
-    value: "$142,850",
-    trend: "↗ +12.4% THIS MONTH",
-    trendColor: "text-emerald-400",
-  },
-  {
-    label: "ACTIVE ORDERS",
-    value: "842",
-    trend: "📦 42 IN PACKAGING",
-    trendColor: "text-[#737373]",
-  },
-  {
-    label: "NEW CREW MEMBERS",
-    value: "124",
-    trend: "➕ +18 SINCE YESTERDAY",
-    trendColor: "text-[#EF476F]",
-  },
-];
+export default function MetricsRow({ stats }) {
+  const metrics = [
+    {
+      label: "TOTAL SALES",
+      value: stats?.totalSalesCents != null ? `$${(stats.totalSalesCents / 100).toLocaleString()}` : "$0",
+      trend: "ALL TIME REVENUE",
+      trendColor: "text-emerald-400",
+    },
+    {
+      label: "ACTIVE ORDERS",
+      value: stats?.activeOrders ?? "0",
+      trend: `${stats?.orderCounts?.pending || 0} PENDING, ${stats?.orderCounts?.inTransit || 0} IN TRANSIT`,
+      trendColor: "text-[#737373]",
+    },
+    {
+      label: "NEW CREW MEMBERS",
+      value: stats?.newCrewMembers ?? "0",
+      trend: "TOTAL CREW MEMBERS",
+      trendColor: "text-[#EF476F]",
+    },
+  ];
 
-export default function MetricsRow() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       {metrics.map((m) => (
@@ -30,9 +30,7 @@ export default function MetricsRow() {
           <div className="text-3xl font-black text-white tracking-tight mt-2">
             {m.value}
           </div>
-          <span className={`text-[10px] font-bold mt-1 block ${m.trendColor}`}>
-            {m.trend}
-          </span>
+          <div className={`text-[10px] font-bold mt-2 ${m.trendColor}`}>{m.trend}</div>
         </div>
       ))}
     </div>

@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { adminApi } from "../../api/admin.js";
 import Pagination from "../../components/admin/Pagination";
 import Drawer from "../../components/admin/Drawer";
 
-const stats = [
-  { label: "TOTAL ORDERS", value: "1,284", sub: "All time" },
-  { label: "PENDING", value: "23", sub: "Awaiting fulfillment", color: "text-[#f59e0b]" },
-  { label: "IN TRANSIT", value: "47", sub: "Out for delivery", color: "text-[#00e5ff]" },
-  { label: "COMPLETED", value: "1,192", sub: "This month", color: "text-[#ff2d78]" },
+const defaultStats = [
+  { label: "TOTAL ORDERS", value: "0", sub: "All time" },
+  { label: "PENDING", value: "0", sub: "Awaiting fulfillment", color: "text-[#f59e0b]" },
+  { label: "IN TRANSIT", value: "0", sub: "Out for delivery", color: "text-[#00e5ff]" },
+  { label: "COMPLETED", value: "0", sub: "This month", color: "text-[#ff2d78]" },
 ];
 
 const orders = [
@@ -30,13 +32,33 @@ const statusStyles = {
 export default function OrdersPage() {
   const [drawerOrder, setDrawerOrder] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [apiOrders, setApiOrders] = useState(null);
+  const [loadingOrders, setLoadingOrders] = useState(true);
 
-  const filtered = activeFilter === "ALL" ? orders : orders.filter((o) => o.status === activeFilter);
+  useEffect(() => {
+    adminApi
+      .orders()
+      .then((res) => setApiOrders(res.data))
+      .catch(() => {})
+      .finally(() => setLoadingOrders(false));
+  }, []);
+
+  const active = loadingOrders
+    ? defaultStats
+    : [
+        { label: "TOTAL ORDERS", value: String(apiOrders?.length ?? 0), sub: "All time" },
+        { label: "PENDING", value: String(apiOrders?.filter(o=>o.status==="PENDING").length ?? 0), sub: "Awaiting fulfillment", color: "text-[#f59e0b]" },
+        { label: "IN TRANSIT", value: String(apiOrders?.filter(o=>o.status==="SHIPPED"||o.status==="IN_TRANSIT").length ?? 0), sub: "Out for delivery", color: "text-[#00e5ff]" },
+        { label: "COMPLETED", value: String(apiOrders?.filter(o=>o.status==="COMPLETED").length ?? 0), sub: "This month", color: "text-[#ff2d78]" },
+      ];
+
+  const orderList = apiOrders ?? orders;
+  const filtered = activeFilter === "ALL" ? orderList : orderList.filter((o) => o.status === activeFilter);
 
   return (
     <>
       <div className="grid grid-cols-4 gap-5 mb-6">
-        {stats.map((s) => (
+          {active.map((s) => (
           <div key={s.label} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5">
             <div className="text-[9px] font-bold text-[#888] uppercase tracking-widest">{s.label}</div>
             <div className={`text-2xl font-black mt-1 ${s.color || "text-white"}`}>{s.value}</div>
