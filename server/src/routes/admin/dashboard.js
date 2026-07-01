@@ -21,7 +21,10 @@ router.get("/", async (req, res, next) => {
       supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "CANCELLED"),
       supabase.from("crew_members").select("id", { count: "exact", head: true }),
       supabase.from("admin_activity_log").select("*").order("created_at", { ascending: false }).limit(10),
-    ]);
+    ]).catch((err) => {
+      console.error("Error fetching dashboard data:", err);
+      
+    });
 
     const totalRevenue = totalSales.data?.reduce((sum, o) => sum + (o.total_cents || 0), 0) || 0;
 

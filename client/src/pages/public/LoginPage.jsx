@@ -23,8 +23,11 @@ export default function LoginPage() {
       const json = await login(email, password);
 
       console.log("returned json from login : " + json)
+
+      console.log("is_admin: " + json.is_admin)
       
-      if (json.is_admin && from === "/account") {
+      
+      if (json.is_admin) {
         navigate("/admin", { replace: true });
       } else {
         navigate(from, { replace: true });

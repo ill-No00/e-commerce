@@ -13,6 +13,9 @@ export function getSupabase() {
 }
 
 export function getServiceSupabase() {
+
+  
+
   if (!serviceClient) {
     serviceClient = createClient(
       config.supabase.url,
@@ -20,6 +23,9 @@ export function getServiceSupabase() {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
   }
+
+  
+
   return serviceClient;
 }
 

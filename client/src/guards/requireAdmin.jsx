@@ -11,6 +11,7 @@ export default function RequireAdmin({ children }) {
   useEffect(() => {
     if (loading) return;
     if (!user) {
+      console.log("User is not logged in, redirecting to login.");
       setAdminState({ checking: false, isAdmin: false });
       return;
     }
@@ -18,9 +19,11 @@ export default function RequireAdmin({ children }) {
     adminApi
       .dashboard()
       .then(() => {
+        console.log("User is an admin.");
         setAdminState({ checking: false, isAdmin: true });
       })
-      .catch(() => {
+      .catch((e) => {
+        console.error("Error fetching dashboard data:", e);
         setAdminState({ checking: false, isAdmin: false });
       });
   }, [user, loading]);
@@ -36,8 +39,10 @@ export default function RequireAdmin({ children }) {
   if (!user) {
     return <Navigate to="/login" state={{ from: "/admin" }} replace />;
   }
+  console.log("Admin state:", adminState);
 
   if (!adminState.isAdmin) {
+    console.log("User is not an admin, redirecting to home.");
     return <Navigate to="/" replace />;
   }
 

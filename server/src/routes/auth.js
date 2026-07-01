@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { getSupabase } from "../config/supabase.js";
+import { getSupabase , getServiceSupabase } from "../config/supabase.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
@@ -57,15 +57,17 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ error: error.message });
     }
 
+    const serviceClient = getServiceSupabase();
+
     // Check if user is an active admin
-    const { data: adminRecord } = await supabase
+    const { data: adminRecord, error: adminError } = await serviceClient
       .from("admin_users")
       .select("*")
       .eq("id", data.user.id)
       .eq("status", "ACTIVE")
       .maybeSingle();
 
-    console.log(data)
+    
 
     res.json({
       user: data.user,
