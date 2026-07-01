@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { productsApi } from "../../api/products.js";
+import { formatCents } from "../../utils/format.js";
 import ShopHero from "../../components/shop/ShopHero";
 import EditorialSection from "../../components/shop/EditorialSection";
 import CustomerReviews from "../../components/shop/CustomerReviews";
@@ -9,7 +10,7 @@ import RelatedProducts from "../../components/shop/RelatedProducts";
 export default function ProductDetail() {
   const { id } = useParams();
   const { state } = useLocation();
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] = useState(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function ProductDetail() {
     productsApi
       .getBySlug(id)
       .then((res) => setProduct(res.data))
-      .catch(() => setProduct(null))
+      .catch(() => setProduct(undefined))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -38,32 +39,26 @@ export default function ProductDetail() {
       <div className="bg-[#121212] min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl font-black text-white uppercase tracking-tight mb-2">PRODUCT NOT FOUND</div>
-          <p className="text-[#888] text-xs uppercase tracking-widest">The product you're looking for doesn't exist.</p>
+          <p className="text-[#888] text-xs uppercase tracking-widest">The product you&apos;re looking for doesn&apos;t exist.</p>
         </div>
       </div>
     );
   }
 
-  const series = product.series || "PRO PERFORMANCE SERIES";
+  const series = product.series;
   const price = product.base_price_cents != null
-    ? `$${(product.base_price_cents / 100).toFixed(2)}`
-    : state?.price || "$189.00";
-  const badge = product.badge || state?.badge || null;
-  const widths = product.product_variants?.map((v) => v.size_label).filter(Boolean) || ['8.0"', '8.25"', '8.5"'];
-  const finishes = product.product_variants?.map((v) => v.finish_hex).filter(Boolean) || ["#EF476F", "#6A4C93", "#3A6B6B"];
-  const specs = product.construction || product.concave || product.trucks_spec || product.bearings_spec
-    ? [
-        ...(product.construction ? [{ label: "Construction", value: product.construction }] : []),
-        ...(product.concave ? [{ label: "Concave", value: product.concave }] : []),
-        ...(product.trucks_spec ? [{ label: "Trucks", value: product.trucks_spec }] : []),
-        ...(product.bearings_spec ? [{ label: "Bearings", value: product.bearings_spec }] : []),
-      ]
-    : [
-        { label: "Construction", value: "7-PLY MAPLE" },
-        { label: "Concave", value: "MEDIUM" },
-        { label: "Trucks", value: "STANDARD 129" },
-        { label: "Bearings", value: "ABEC-7 STEEL" },
-      ];
+    ? formatCents(product.base_price_cents)
+    : state?.price;
+  const badge = product.badge ?? state?.badge;
+  const widths = product.product_variants?.map((v) => v.size_label).filter(Boolean);
+  const finishes = product.product_variants?.map((v) => v.finish_hex).filter(Boolean);
+  const specs = [
+    ...(product.construction ? [{ label: "Construction", value: product.construction }] : []),
+    ...(product.concave ? [{ label: "Concave", value: product.concave }] : []),
+    ...(product.trucks_spec ? [{ label: "Trucks", value: product.trucks_spec }] : []),
+    ...(product.bearings_spec ? [{ label: "Bearings", value: product.bearings_spec }] : []),
+  ];
+  const images = product.product_images;
 
   return (
     <div className="bg-[#121212] min-h-screen">
@@ -71,16 +66,17 @@ export default function ProductDetail() {
         series={series}
         title={product.name}
         price={price}
-        oldPrice={state?.oldPrice || null}
+        oldPrice={state?.oldPrice}
         widths={widths}
-        selectedWidth={widths[0]}
+        selectedWidth={widths?.[0]}
         finishes={finishes}
-        specs={specs}
+        specs={specs.length ? specs : undefined}
         badge={badge}
+        images={images}
       />
-      <EditorialSection />
-      <CustomerReviews productId={product.id} />
-      <RelatedProducts />
+      <EditorialSection description={product.description} />
+      <CustomerReviews productId={product.id} ratingAvg={product.rating_avg} />
+      <RelatedProducts categorySlug={product.category?.slug} excludeSlug={product.slug} />
     </div>
   );
 }

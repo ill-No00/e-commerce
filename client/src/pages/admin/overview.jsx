@@ -60,8 +60,8 @@ export default function AdminOverview() {
       </div>
 
       <MetricsRow stats={dashboard?.stats} />
-      <RevenueAndFeed activityLog={dashboard?.activityLog || []} />
-      <PerformanceHero />
+      <RevenueAndFeed activityLog={dashboard?.activityLog} />
+      <PerformanceHero stats={dashboard?.performance} />
     </>
   );
 }

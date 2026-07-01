@@ -1,3 +1,5 @@
+import { formatCents } from "../../utils/format.js";
+
 const slots = [
   { key: "DECK", label: "DECK", icon: "M4 20h16a2 2 0 002-2V8a2 2 0 00-2-2h-7.93a2 2 0 01-1.66-.9l-.82-1.2A2 2 0 007.93 3H4a2 2 0 00-2 2v13c0 1.1.9 2 2 2z" },
   { key: "TRUCKS", label: "TRUCKS", icon: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" },
@@ -7,14 +9,11 @@ const slots = [
   { key: "GRIP TAPE", label: "GRIP TAPE", icon: "M9 3h6v18H9z" },
 ];
 
-const slotPrices = {
-  DECK: "$65",
-  TRUCKS: "$65",
-  WHEELS: "$42",
-  BEARINGS: "$18",
-  HARDWARE: "$5",
-  "GRIP TAPE": "$10",
-};
+function getProductPrice(product) {
+  if (!product) return undefined;
+  const cents = product.base_price_cents ?? product.product_variants?.[0]?.price_cents;
+  return formatCents(cents);
+}
 
 export default function LiveBuildPanel({ currentStep, selections, total }) {
   return (
@@ -31,9 +30,10 @@ export default function LiveBuildPanel({ currentStep, selections, total }) {
 
       <div className="flex flex-col gap-3 flex-1">
         {slots.map((slot) => {
-          const isSelected = selections[slot.label];
+          const selected = selections[slot.label];
           const stepNum = slots.indexOf(slot) + 1;
           const isCurrent = stepNum === currentStep;
+          const price = getProductPrice(selected);
 
           return (
             <div key={slot.key}>
@@ -58,17 +58,17 @@ export default function LiveBuildPanel({ currentStep, selections, total }) {
                       {slot.label}
                     </span>
                   </div>
-                  {isSelected && (
+                  {selected && (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff2d78" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                       <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                   )}
                 </div>
-                {isSelected ? (
+                {selected ? (
                   <div className="mt-1.5">
-                    <div className="text-[11px] font-bold text-white">{selections[slot.label]}</div>
-                    <div className="text-[10px] text-[#ff2d78] font-bold">{slotPrices[slot.label]}</div>
+                    <div className="text-[11px] font-bold text-white">{selected.name ?? "—"}</div>
+                    {price && <div className="text-[10px] text-[#ff2d78] font-bold">{price}</div>}
                   </div>
                 ) : (
                   <div className="text-[10px] text-[#444] italic mt-1">— Empty Slot</div>
@@ -83,7 +83,9 @@ export default function LiveBuildPanel({ currentStep, selections, total }) {
         <div className="text-[9px] text-[#888] font-semibold tracking-widest uppercase mb-2">
           TOTAL ESTIMATE
         </div>
-        <div className="text-2xl font-black text-[#ff2d78]">${total}</div>
+        <div className="text-2xl font-black text-[#ff2d78]">
+          {total > 0 ? `$${(total / 100).toFixed(2)}` : "—"}
+        </div>
       </div>
     </aside>
   );

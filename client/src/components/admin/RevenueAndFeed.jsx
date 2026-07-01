@@ -1,32 +1,31 @@
-const days = [
-  { label: "MON", height: "h-20", highlight: false },
-  { label: "TUE", height: "h-28", highlight: false },
-  { label: "WED", height: "h-24", highlight: false },
-  { label: "THU", height: "h-32", highlight: false },
-  { label: "FRI", height: "h-40", highlight: true },
-  { label: "SAT", height: "h-28", highlight: false },
-  { label: "SUN", height: "h-16", highlight: false },
-];
+const borderColors = {
+  info: "border-[#EF476F]",
+  warning: "border-amber-400",
+  success: "border-teal-400",
+  error: "border-red-400",
+};
 
-const feedEvents = [
-  {
-    text: "@SkateKing purchased &lsquo;Concrete V1&rsquo;",
-    time: "2 MINUTES AGO",
-    border: "border-[#EF476F]",
-  },
-  {
-    text: "Inventory Alert: Low stock on &lsquo;Obsidian Trucks&rsquo;",
-    time: "15 MINUTES AGO",
-    border: "border-amber-400",
-  },
-  {
-    text: "New Crew Member Joined: UrbanFloR_99",
-    time: "1 HOUR AGO",
-    border: "border-teal-400",
-  },
-];
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return undefined;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "JUST NOW";
+  if (mins < 60) return `${mins} MINUTES AGO`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} HOUR${hours > 1 ? "S" : ""} AGO`;
+  const days = Math.floor(hours / 24);
+  return `${days} DAY${days > 1 ? "S" : ""} AGO`;
+}
 
-export default function RevenueAndFeed() {
+export default function RevenueAndFeed({ activityLog }) {
+  const feedEvents = activityLog?.length
+    ? activityLog.map((event) => ({
+        text: event.message,
+        time: formatTimeAgo(event.created_at),
+        border: borderColors[event.severity] || borderColors.info,
+      }))
+    : undefined;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
       <div className="lg:col-span-8 bg-[#171717] border border-neutral-900 rounded-2xl p-6">
@@ -40,24 +39,8 @@ export default function RevenueAndFeed() {
           </div>
         </div>
 
-        <div className="w-full h-64 bg-[#171717] border border-neutral-900 rounded-2xl p-6 flex flex-col justify-end">
-          <div className="flex justify-between items-end h-40 mt-auto px-4">
-            {days.map((day) => (
-              <div key={day.label} className="flex flex-col items-center gap-2">
-                <div className="relative">
-                  <div
-                    className={`w-8 ${day.highlight ? "bg-[#EF476F]" : "bg-[#282826]"} rounded-t-md ${day.height} transition-all`}
-                  />
-                  {day.highlight && (
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-white text-[#121212] text-[8px] font-black px-2 py-0.5 rounded whitespace-nowrap uppercase">
-                      Peak
-                    </div>
-                  )}
-                </div>
-                <span className="text-[9px] text-[#737373] font-bold">{day.label}</span>
-              </div>
-            ))}
-          </div>
+        <div className="w-full h-64 bg-[#171717] border border-neutral-900 rounded-2xl p-6 flex items-center justify-center">
+          <span className="text-xs text-[#737373] uppercase tracking-widest">No revenue data available</span>
         </div>
       </div>
 
@@ -67,10 +50,13 @@ export default function RevenueAndFeed() {
             LIVE FEED
           </h3>
           <div className="flex flex-col gap-4 text-[11px]">
-            {feedEvents.map((event, i) => (
+            {!feedEvents?.length && (
+              <p className="text-[#737373] text-xs">No activity yet</p>
+            )}
+            {feedEvents?.map((event, i) => (
               <div key={i} className={`border-l-2 ${event.border} pl-3 py-0.5`}>
-                <p className="text-[#F8F9FA]" dangerouslySetInnerHTML={{ __html: event.text }} />
-                <p className="text-[#737373] text-[9px] font-bold mt-0.5">{event.time}</p>
+                <p className="text-[#F8F9FA]">{event.text ?? "—"}</p>
+                <p className="text-[#737373] text-[9px] font-bold mt-0.5">{event.time ?? "—"}</p>
               </div>
             ))}
           </div>

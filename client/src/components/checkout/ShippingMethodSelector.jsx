@@ -5,24 +5,7 @@ export default function ShippingMethodSelector({ methods = [], selected, onSelec
     }
   };
 
-  const defaultMethods = [
-    {
-      id: "default-standard",
-      name: "STREET STANDARD DELIVERY",
-      price_cents: 0,
-      min_business_days: 2,
-      max_business_days: 3,
-    },
-    {
-      id: "default-express",
-      name: "EXPRESS DELIVERY",
-      price_cents: 2500,
-      min_business_days: 1,
-      max_business_days: 1,
-    },
-  ];
-
-  const activeMethods = methods.length > 0 ? methods : defaultMethods;
+  const activeMethods = methods;
 
   return (
     <div className="mb-8">
@@ -31,7 +14,10 @@ export default function ShippingMethodSelector({ methods = [], selected, onSelec
       </h3>
 
       <div className="flex flex-col gap-4">
-        {activeMethods.map((method) => {
+        {!activeMethods?.length && (
+          <p className="text-xs text-[#737373] uppercase tracking-widest">No shipping methods available</p>
+        )}
+        {(activeMethods || []).map((method) => {
           const isSelected = selected === method.id;
           const price = method.price_cents === 0 ? "FREE" : `$${(method.price_cents / 100).toFixed(2)}`;
           const timeText =

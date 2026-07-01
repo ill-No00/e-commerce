@@ -1,68 +1,108 @@
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { adminApi } from "../../api/admin.js";
+import { formatCents, formatDate } from "../../utils/format.js";
 import Pagination from "../../components/admin/Pagination";
 import Drawer from "../../components/admin/Drawer";
 
-const defaultStats = [
-  { label: "TOTAL ORDERS", value: "0", sub: "All time" },
-  { label: "PENDING", value: "0", sub: "Awaiting fulfillment", color: "text-[#f59e0b]" },
-  { label: "IN TRANSIT", value: "0", sub: "Out for delivery", color: "text-[#00e5ff]" },
-  { label: "COMPLETED", value: "0", sub: "This month", color: "text-[#ff2d78]" },
-];
-
-const orders = [
-  { id: "#4W-00291", customer: "Marcus L.", email: "marcus@email.com", initials: "ML", build: "Deck + Trucks + Wheels + 3 more", date: "Mar 14, 2026", total: "$228.96", status: "PENDING" },
-  { id: "#4W-00290", customer: "Sarah K.", email: "sarah@email.com", initials: "SK", build: "Tokyo Neon + Obsidian Pro + 4 more", date: "Mar 12, 2026", total: "$195.00", status: "IN TRANSIT" },
-  { id: "#4W-00289", customer: "Jay T.", email: "jay@email.com", initials: "JT", build: "Concrete Ghost + Hollow Lights", date: "Mar 10, 2026", total: "$145.00", status: "COMPLETED" },
-  { id: "#4W-00288", customer: "Priya R.", email: "priya@email.com", initials: "PR", build: "Shadow Maple + Neon Pivot + 2 more", date: "Mar 08, 2026", total: "$210.00", status: "COMPLETED" },
-  { id: "#4W-00287", customer: "Dom W.", email: "dom@email.com", initials: "DW", build: "Night Rider + Titanium Raw + 3 more", date: "Mar 07, 2026", total: "$260.00", status: "PENDING" },
-  { id: "#4W-00286", customer: "Aisha B.", email: "aisha@email.com", initials: "AB", build: "Tokyo Neon + Bones Reds + 2 more", date: "Mar 05, 2026", total: "$108.00", status: "IN TRANSIT" },
-  { id: "#4W-00285", customer: "Leo M.", email: "leo@email.com", initials: "LM", build: "Concrete Ripper V2 + Bronson G3", date: "Mar 03, 2026", total: "$92.00", status: "CANCELLED" },
-  { id: "#4W-00284", customer: "Zara N.", email: "zara@email.com", initials: "ZN", build: "Purple Haze + Spitfire + 4 more", date: "Feb 28, 2026", total: "$312.00", status: "COMPLETED" },
-];
-
 const statusStyles = {
+  PROCESSING: "bg-[#f59e0b]/20 text-[#f59e0b]",
   PENDING: "bg-[#f59e0b]/20 text-[#f59e0b]",
+  SHIPPED: "bg-[#00e5ff]/20 text-[#00e5ff]",
   "IN TRANSIT": "bg-[#00e5ff]/20 text-[#00e5ff]",
+  IN_TRANSIT: "bg-[#00e5ff]/20 text-[#00e5ff]",
+  DELIVERED: "bg-[#22c55e]/20 text-[#22c55e]",
   COMPLETED: "bg-[#22c55e]/20 text-[#22c55e]",
   CANCELLED: "bg-[#ef4444]/20 text-[#ef4444]",
 };
 
+function mapOrder(o) {
+  const profile = o.profiles || {};
+  const items = o.order_items || [];
+  const displayName = profile.display_name || undefined;
+  const initials = displayName
+    ? displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : undefined;
+  const buildSummary = items.length
+    ? items.map((i) => i.product_name).filter(Boolean).join(" + ")
+    : undefined;
+
+  return {
+    ...o,
+    id: o.order_number || o.id,
+    customer: displayName,
+    email: profile.email,
+    initials,
+    build: buildSummary,
+    date: formatDate(o.placed_at),
+    total: formatCents(o.total_cents),
+    status: o.status,
+  };
+}
+
 export default function OrdersPage() {
   const [drawerOrder, setDrawerOrder] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
-  const [apiOrders, setApiOrders] = useState(null);
+  const [apiOrders, setApiOrders] = useState(undefined);
+  const [pagination, setPagination] = useState(undefined);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
   useEffect(() => {
     adminApi
       .orders()
-      .then((res) => setApiOrders(res.data))
-      .catch(() => {})
+      .then((res) => {
+        setApiOrders(res.data);
+        setPagination(res.pagination);
+      })
+      .catch(() => {
+        setApiOrders(undefined);
+        setPagination(undefined);
+      })
       .finally(() => setLoadingOrders(false));
   }, []);
 
-  const active = loadingOrders
-    ? defaultStats
-    : [
-        { label: "TOTAL ORDERS", value: String(apiOrders?.length ?? 0), sub: "All time" },
-        { label: "PENDING", value: String(apiOrders?.filter(o=>o.status==="PENDING").length ?? 0), sub: "Awaiting fulfillment", color: "text-[#f59e0b]" },
-        { label: "IN TRANSIT", value: String(apiOrders?.filter(o=>o.status==="SHIPPED"||o.status==="IN_TRANSIT").length ?? 0), sub: "Out for delivery", color: "text-[#00e5ff]" },
-        { label: "COMPLETED", value: String(apiOrders?.filter(o=>o.status==="COMPLETED").length ?? 0), sub: "This month", color: "text-[#ff2d78]" },
-      ];
+  const orderList = (apiOrders || []).map(mapOrder);
+  const filtered =
+    activeFilter === "ALL"
+      ? orderList
+      : orderList.filter((o) => {
+          if (activeFilter === "IN TRANSIT") return o.status === "SHIPPED" || o.status === "IN_TRANSIT";
+          if (activeFilter === "COMPLETED") return o.status === "DELIVERED" || o.status === "COMPLETED";
+          if (activeFilter === "PENDING") return o.status === "PROCESSING" || o.status === "PENDING";
+          return o.status === activeFilter;
+        });
 
-  const orderList = apiOrders ?? orders;
-  const filtered = activeFilter === "ALL" ? orderList : orderList.filter((o) => o.status === activeFilter);
+  const stats = loadingOrders
+    ? undefined
+    : [
+        { label: "TOTAL ORDERS", value: String(orderList.length), sub: "All time" },
+        {
+          label: "PENDING",
+          value: String(orderList.filter((o) => o.status === "PROCESSING" || o.status === "PENDING").length),
+          sub: "Awaiting fulfillment",
+          color: "text-[#f59e0b]",
+        },
+        {
+          label: "IN TRANSIT",
+          value: String(orderList.filter((o) => o.status === "SHIPPED" || o.status === "IN_TRANSIT").length),
+          sub: "Out for delivery",
+          color: "text-[#00e5ff]",
+        },
+        {
+          label: "COMPLETED",
+          value: String(orderList.filter((o) => o.status === "DELIVERED" || o.status === "COMPLETED").length),
+          sub: "This month",
+          color: "text-[#ff2d78]",
+        },
+      ];
 
   return (
     <>
       <div className="grid grid-cols-4 gap-5 mb-6">
-          {active.map((s) => (
-          <div key={s.label} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5">
-            <div className="text-[9px] font-bold text-[#888] uppercase tracking-widest">{s.label}</div>
-            <div className={`text-2xl font-black mt-1 ${s.color || "text-white"}`}>{s.value}</div>
-            <div className="text-[10px] text-[#888] mt-1">{s.sub}</div>
+        {(stats || Array.from({ length: 4 })).map((s, i) => (
+          <div key={s?.label || i} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5">
+            <div className="text-[9px] font-bold text-[#888] uppercase tracking-widest">{s?.label}</div>
+            <div className={`text-2xl font-black mt-1 ${s?.color || "text-white"}`}>{s?.value ?? "—"}</div>
+            <div className="text-[10px] text-[#888] mt-1">{s?.sub}</div>
           </div>
         ))}
       </div>
@@ -113,25 +153,36 @@ export default function OrdersPage() {
             </tr>
           </thead>
           <tbody>
+            {filtered.length === 0 && !loadingOrders && (
+              <tr>
+                <td colSpan={7} className="px-5 py-8 text-center text-xs text-[#888] uppercase tracking-widest">
+                  No orders found
+                </td>
+              </tr>
+            )}
             {filtered.map((o, i) => (
-              <tr key={o.id} className={i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#141414]"}>
-                <td className="px-5 py-4 text-xs font-mono text-[#ff2d78] font-bold">{o.id}</td>
+              <tr key={o.id || i} className={i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#141414]"}>
+                <td className="px-5 py-4 text-xs font-mono text-[#ff2d78] font-bold">{o.id ?? "—"}</td>
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-[#7c3aed]/30 flex items-center justify-center text-[10px] font-bold text-white">{o.initials}</div>
+                    <div className="w-7 h-7 rounded-full bg-[#7c3aed]/30 flex items-center justify-center text-[10px] font-bold text-white">
+                      {o.initials ?? "?"}
+                    </div>
                     <div>
-                      <div className="text-xs font-bold text-white">{o.customer}</div>
-                      <div className="text-[9px] text-[#888]">{o.email}</div>
+                      <div className="text-xs font-bold text-white">{o.customer ?? "—"}</div>
+                      <div className="text-[9px] text-[#888]">{o.email ?? "—"}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-4 text-[10px] text-[#888] max-w-[180px] truncate">{o.build}</td>
-                <td className="px-5 py-4 text-xs text-[#888]">{o.date}</td>
-                <td className="px-5 py-4 text-xs font-bold text-white">{o.total}</td>
+                <td className="px-5 py-4 text-[10px] text-[#888] max-w-[180px] truncate">{o.build ?? "—"}</td>
+                <td className="px-5 py-4 text-xs text-[#888]">{o.date ?? "—"}</td>
+                <td className="px-5 py-4 text-xs font-bold text-white">{o.total ?? "—"}</td>
                 <td className="px-5 py-4">
-                  <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${statusStyles[o.status]}`}>
-                    {o.status}
-                  </span>
+                  {o.status && (
+                    <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${statusStyles[o.status] || "bg-[#2a2a2a] text-[#888]"}`}>
+                      {o.status}
+                    </span>
+                  )}
                 </td>
                 <td className="px-5 py-4 text-right">
                   <button onClick={() => setDrawerOrder(o)} className="text-[#888] hover:text-white transition-colors mr-2" title="View">
@@ -152,13 +203,15 @@ export default function OrdersPage() {
         </table>
       </div>
 
-      <Pagination current={1} total={4} />
+      {pagination && (
+        <Pagination current={pagination.page} total={pagination.totalPages} />
+      )}
 
       <Drawer open={!!drawerOrder} onClose={() => setDrawerOrder(null)}>
         {drawerOrder && (
           <>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-sm font-black text-white uppercase tracking-tight">{drawerOrder.id}</h2>
+              <h2 className="text-sm font-black text-white uppercase tracking-tight">{drawerOrder.id ?? "—"}</h2>
               <button onClick={() => setDrawerOrder(null)} className="text-[#888] hover:text-white transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -168,41 +221,42 @@ export default function OrdersPage() {
 
             <div className="bg-[#1a1a1a] rounded-xl p-4 mb-6 border border-[#2a2a2a]">
               <div className="text-[9px] text-[#888] font-semibold tracking-widest uppercase mb-2">CUSTOMER</div>
-              <div className="text-xs font-bold text-white">{drawerOrder.customer}</div>
-              <div className="text-[10px] text-[#888]">{drawerOrder.email}</div>
-              <div className="text-[10px] text-[#888] mt-2">1234 Venice Blvd, Los Angeles, CA 90210</div>
+              <div className="text-xs font-bold text-white">{drawerOrder.customer ?? "—"}</div>
+              <div className="text-[10px] text-[#888]">{drawerOrder.email ?? "—"}</div>
             </div>
 
             <div className="mb-6">
               <div className="text-[9px] text-[#888] font-semibold tracking-widest uppercase mb-3">COMPONENTS</div>
               <div className="flex flex-col gap-2">
-                {["DECK: Tokyo Neon '24", "TRUCKS: Obsidian Pro V2", "WHEELS: Spitfire F4 52mm", "BEARINGS: Bones Reds", "HARDWARE: Allen 1\"", "GRIP TAPE: Mob Grip Black"].map((c) => (
-                  <div key={c} className="flex justify-between items-center bg-[#1a1a1a] rounded-lg px-3 py-2 border border-[#2a2a2a]">
-                    <span className="text-[10px] text-white font-bold">{c.split(":")[0]}</span>
-                    <span className="text-[10px] text-[#888]">{c.split(":")[1]}</span>
+                {(drawerOrder.order_items || []).length === 0 && (
+                  <div className="text-[10px] text-[#888]">—</div>
+                )}
+                {(drawerOrder.order_items || []).map((item) => (
+                  <div key={item.product_name + item.quantity} className="flex justify-between items-center bg-[#1a1a1a] rounded-lg px-3 py-2 border border-[#2a2a2a]">
+                    <span className="text-[10px] text-white font-bold">{item.product_name ?? "—"}</span>
+                    <span className="text-[10px] text-[#888]">x{item.quantity ?? 1}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a] mb-6">
-              <div className="flex justify-between text-[11px] py-1"><span className="text-[#888]">Subtotal</span><span className="text-white font-bold">$195.00</span></div>
-              <div className="flex justify-between text-[11px] py-1"><span className="text-[#888]">Assembly Labor</span><span className="text-[#00e5ff] font-bold">COMPLIMENTARY</span></div>
-              <div className="flex justify-between text-[11px] py-1"><span className="text-[#888]">Tax</span><span className="text-white font-bold">$18.96</span></div>
-              <div className="flex justify-between text-[11px] py-1"><span className="text-[#888]">Shipping</span><span className="text-white font-bold">$15.00</span></div>
+              <div className="flex justify-between text-[11px] py-1"><span className="text-[#888]">Subtotal</span><span className="text-white font-bold">{formatCents(drawerOrder.subtotal_cents) ?? "—"}</span></div>
+              <div className="flex justify-between text-[11px] py-1"><span className="text-[#888]">Tax</span><span className="text-white font-bold">{formatCents(drawerOrder.tax_cents) ?? "—"}</span></div>
+              <div className="flex justify-between text-[11px] py-1"><span className="text-[#888]">Shipping</span><span className="text-white font-bold">{formatCents(drawerOrder.shipping_cents) ?? "—"}</span></div>
               <div className="border-t border-[#2a2a2a] mt-2 pt-2 flex justify-between">
                 <span className="text-[10px] font-black text-white uppercase tracking-wider">TOTAL</span>
-                <span className="text-lg font-black text-[#ff2d78]">$228.96</span>
+                <span className="text-lg font-black text-[#ff2d78]">{drawerOrder.total ?? "—"}</span>
               </div>
             </div>
 
             <div className="mb-4">
               <label className="text-[9px] font-bold text-[#888] uppercase tracking-widest block mb-2">UPDATE STATUS</label>
-              <select className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 py-2.5 outline-none">
-                <option>PENDING</option>
-                <option>IN TRANSIT</option>
-                <option>COMPLETED</option>
-                <option>CANCELLED</option>
+              <select defaultValue={drawerOrder.status} className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-xs text-white px-3 py-2.5 outline-none">
+                <option value="PROCESSING">PROCESSING</option>
+                <option value="SHIPPED">SHIPPED</option>
+                <option value="DELIVERED">DELIVERED</option>
+                <option value="CANCELLED">CANCELLED</option>
               </select>
             </div>
             <button className="w-full bg-[#ff2d78] text-white text-[10px] font-black tracking-widest uppercase py-3 rounded-full hover:brightness-110 transition-all mb-3">

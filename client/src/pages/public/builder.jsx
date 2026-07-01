@@ -20,6 +20,11 @@ const stepLabels = {
   7: "REVIEW",
 };
 
+function getProductPrice(product) {
+  if (!product) return 0;
+  return product.base_price_cents ?? product.product_variants?.[0]?.price_cents ?? 0;
+}
+
 const hasSelectionForStep = (step, selections, selectedBolt) => {
   switch (step) {
     case 1: return !!selections.DECK;
@@ -45,11 +50,12 @@ export default function BuilderPage() {
     "GRIP TAPE": null,
   });
   const [selectedBolt, setSelectedBolt] = useState(null);
-  const [selectedRiser, setSelectedRiser] = useState("NO RISER");
 
-  const handleSelect = (category) => (value) => {
-    if (selections[category] === value) return;
-    setSelections((prev) => ({ ...prev, [category]: value }));
+  const handleSelect = (category) => (product) => {
+    setSelections((prev) => ({
+      ...prev,
+      [category]: prev[category]?.id === product?.id ? null : product,
+    }));
   };
 
   const canProceed = hasSelectionForStep(currentStep, selections, selectedBolt);
@@ -74,24 +80,21 @@ export default function BuilderPage() {
     window.scrollTo(0, 0);
   };
 
-  const total = (() => {
-    const prices = {
-      DECK: selections.DECK ? 65 : 0,
-      TRUCKS: selections.TRUCKS ? 65 : 0,
-      WHEELS: selections.WHEELS ? 42 : 0,
-      BEARINGS: selections.BEARINGS ? 18 : 0,
-      HARDWARE: selections.HARDWARE ? 5 : 0,
-      "GRIP TAPE": selections["GRIP TAPE"] ? 10 : 0,
-    };
-    return Object.values(prices).reduce((a, b) => a + b, 0);
-  })();
+  const total = Object.values(selections).reduce((sum, p) => sum + getProductPrice(p), 0)
+    + getProductPrice(selectedBolt);
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return <StepDeck selected={selections.DECK} onSelect={handleSelect("DECK")} />;
       case 2:
-        return <StepTrucks selected={selections.TRUCKS} onSelect={handleSelect("TRUCKS")} />;
+        return (
+          <StepTrucks
+            selected={selections.TRUCKS}
+            onSelect={handleSelect("TRUCKS")}
+            deckSelection={selections.DECK}
+          />
+        );
       case 3:
         return <StepWheels selected={selections.WHEELS} onSelect={handleSelect("WHEELS")} />;
       case 4:
@@ -100,18 +103,16 @@ export default function BuilderPage() {
         return (
           <StepHardware
             selectedBolt={selectedBolt}
-            selectedRiser={selectedRiser}
-            onSelectBolt={(v) => {
-              setSelectedBolt(v);
-              setSelections((prev) => ({ ...prev, HARDWARE: v }));
+            onSelectBolt={(product) => {
+              setSelectedBolt(product);
+              setSelections((prev) => ({ ...prev, HARDWARE: product }));
             }}
-            onSelectRiser={setSelectedRiser}
           />
         );
       case 6:
         return <StepGripTape selected={selections["GRIP TAPE"]} onSelect={handleSelect("GRIP TAPE")} />;
       case 7:
-        return <StepReview selections={selections} />;
+        return <StepReview selections={selections} total={total} />;
       default:
         return null;
     }

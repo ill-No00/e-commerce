@@ -24,8 +24,6 @@ const deckSizes = [
   { label: '8.6"', selected: false },
 ];
 
-const crewTags = ["TOKYO DRIFT", "NYC KINGS", "BERLIN CORE"];
-
 function FilterCheckbox({ label, selected }) {
   return (
     <label className="flex items-center gap-2 cursor-pointer group">
@@ -109,31 +107,46 @@ function ProductCard({ product }) {
   );
 }
 
-function Pagination() {
+function Pagination({ pagination }) {
+  if (!pagination) return null;
+  const { page, totalPages } = pagination;
   return (
     <div className="flex justify-center items-center gap-6 py-12 text-[10px] font-bold uppercase tracking-widest text-[#737373]">
-      <span className="hover:text-white transition-colors cursor-pointer">← PREVIOUS</span>
+      {page > 1 && <span className="hover:text-white transition-colors cursor-pointer">← PREVIOUS</span>}
       <div className="flex items-center gap-4">
-        <span className="text-white border-b border-[#EF476F] pb-0.5">01</span>
-        <span className="hover:text-white cursor-pointer">02</span>
-        <span className="hover:text-white cursor-pointer">03</span>
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+          <span key={p} className={p === page ? "text-white border-b border-[#EF476F] pb-0.5" : "hover:text-white cursor-pointer"}>
+            {String(p).padStart(2, "0")}
+          </span>
+        ))}
       </div>
-      <span className="hover:text-white transition-colors cursor-pointer">NEXT →</span>
+      {page < totalPages && <span className="hover:text-white transition-colors cursor-pointer">NEXT →</span>}
     </div>
   );
 }
 
 export default function CatalogGrid() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(undefined);
+  const [pagination, setPagination] = useState(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     productsApi
       .list()
-      .then((res) => setProducts(res.data || []))
-      .catch(() => {})
+      .then((res) => {
+        setProducts(res.data);
+        setPagination(res.pagination);
+      })
+      .catch(() => {
+        setProducts(undefined);
+        setPagination(undefined);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  const categoryFilters = products?.length
+    ? [...new Set(products.map((p) => p.category?.name).filter(Boolean))]
+    : undefined;
 
   return (
     <>
@@ -164,8 +177,8 @@ export default function CatalogGrid() {
         <aside className="lg:col-span-3 flex flex-col gap-8">
           <FilterGroup title="CATEGORY">
             <div className="flex flex-col gap-2.5 text-xs text-[#737373] font-medium">
-              {categories.map((cat) => (
-                <FilterCheckbox key={cat.label} label={cat.label} selected={cat.selected} />
+              {(categoryFilters || categories.map((c) => c.label)).map((cat, i) => (
+                <FilterCheckbox key={cat} label={cat} selected={i === 0} />
               ))}
             </div>
           </FilterGroup>
@@ -188,16 +201,7 @@ export default function CatalogGrid() {
           </FilterGroup>
 
           <FilterGroup title="STREET CREW">
-            <div className="flex flex-wrap gap-1.5">
-              {crewTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[9px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md bg-[#171717] border border-neutral-800 text-[#737373]"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            <p className="text-[9px] text-[#737373] uppercase tracking-wider">No crew filters available</p>
           </FilterGroup>
         </aside>
 
@@ -211,7 +215,7 @@ export default function CatalogGrid() {
                     <div className="h-3 bg-[#282826] rounded w-1/2" />
                   </div>
                 ))
-              : products.map((product) => (
+              : (products || []).map((product) => (
                   <ProductCard key={product.id || product.name} product={product} />
                 ))}
 
@@ -233,7 +237,7 @@ export default function CatalogGrid() {
             </div>
           </div>
 
-          <Pagination />
+          <Pagination pagination={pagination} />
         </div>
       </section>
     </>

@@ -90,10 +90,12 @@ export default function CartContent() {
   };
 
   const items = cart?.cart_items || [];
-  const subtotal = items.reduce((sum, item) => sum + (item.unit_price_cents * item.quantity) / 100, 0);
-  const shipping = subtotal >= 150 ? 0 : 12;
-  const tax = subtotal * 0.085;
-  const total = subtotal + shipping + tax;
+  const subtotal = items.length
+    ? items.reduce((sum, item) => sum + (item.unit_price_cents * item.quantity) / 100, 0)
+    : undefined;
+  const shipping = undefined;
+  const tax = undefined;
+  const total = subtotal != null ? subtotal : undefined;
 
   if (loading) {
     return (
@@ -148,15 +150,15 @@ export default function CartContent() {
             <div className="flex flex-col gap-3 pb-4 border-b border-neutral-800 text-xs">
               <div className="flex justify-between items-center text-[#737373]">
                 <span>SUBTOTAL</span>
-                <span className="font-bold text-white">${subtotal.toFixed(2)}</span>
+                <span className="font-bold text-white">{subtotal != null ? `$${subtotal.toFixed(2)}` : "—"}</span>
               </div>
               <div className="flex justify-between items-center text-[#737373]">
                 <span>ESTIMATED SHIPPING</span>
-                <span className="font-bold text-white">{shipping === 0 ? "FREE" : `$${shipping.toFixed(2)}`}</span>
+                <span className="font-bold text-white">—</span>
               </div>
               <div className="flex justify-between items-center text-[#737373]">
                 <span>SALES TAX</span>
-                <span className="font-bold text-white">${tax.toFixed(2)}</span>
+                <span className="font-bold text-white">—</span>
               </div>
             </div>
 
@@ -165,7 +167,7 @@ export default function CartContent() {
                 TOTAL
               </span>
               <span className="text-3xl font-black text-[#EF476F] tracking-tight">
-                ${total.toFixed(2)}
+                {total != null ? `$${total.toFixed(2)}` : "—"}
               </span>
             </div>
 

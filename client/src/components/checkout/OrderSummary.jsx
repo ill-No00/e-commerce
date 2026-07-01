@@ -24,20 +24,25 @@ export default function OrderSummary({ ctaText = "CONTINUE TO PAYMENT", ctaTo = 
   }
 
   const items = cart?.cart_items || [];
-  const subtotal = items.reduce((sum, item) => sum + (item.unit_price_cents * item.quantity) / 100, 0);
+  const subtotal = items.length
+    ? items.reduce((sum, item) => sum + (item.unit_price_cents * item.quantity) / 100, 0)
+    : undefined;
 
-  // Read selected shipping method from localStorage
   const savedMethodStr = localStorage.getItem("checkout_shipping_method");
-  let shipping = 0;
+  let shipping = undefined;
   if (savedMethodStr) {
     try {
       const savedMethod = JSON.parse(savedMethodStr);
-      shipping = (savedMethod.price_cents || 0) / 100;
+      shipping = savedMethod.price_cents != null ? (savedMethod.price_cents / 100) : undefined;
     } catch {}
   }
 
-  const tax = subtotal * 0.085;
-  const total = subtotal + shipping + tax;
+  const tax = undefined;
+  const total = subtotal != null && shipping != null
+    ? subtotal + shipping
+    : subtotal != null
+      ? subtotal
+      : undefined;
 
   const btnClasses = "w-full bg-[#EF476F] text-black font-black text-xs tracking-widest uppercase py-4 rounded-xl shadow-md hover:opacity-90 active:scale-95 transition-all text-center block";
 
@@ -73,23 +78,25 @@ export default function OrderSummary({ ctaText = "CONTINUE TO PAYMENT", ctaTo = 
       <div className="flex flex-col gap-3 pt-4 pb-4 border-b border-neutral-800 text-xs">
         <div className="flex justify-between items-center text-[#737373]">
           <span>SUBTOTAL</span>
-          <span className="font-bold text-white">${subtotal.toFixed(2)}</span>
+          <span className="font-bold text-white">{subtotal != null ? `$${subtotal.toFixed(2)}` : "—"}</span>
         </div>
         <div className="flex justify-between items-center text-[#737373]">
           <span>SHIPPING</span>
           <span className="font-bold text-white">
-            {shipping === 0 ? "FREE" : `$${shipping.toFixed(2)}`}
+            {shipping === 0 ? "FREE" : shipping != null ? `$${shipping.toFixed(2)}` : "—"}
           </span>
         </div>
         <div className="flex justify-between items-center text-[#737373]">
           <span>TAXES</span>
-          <span className="font-bold text-white">${tax.toFixed(2)}</span>
+          <span className="font-bold text-white">—</span>
         </div>
       </div>
 
       <div className="flex justify-between items-baseline pt-4 pb-6">
         <span className="text-xs font-black text-white uppercase tracking-wider">TOTAL</span>
-        <span className="text-3xl font-black text-[#EF476F] tracking-tight">${total.toFixed(2)}</span>
+        <span className="text-3xl font-black text-[#EF476F] tracking-tight">
+          {total != null ? `$${total.toFixed(2)}` : "—"}
+        </span>
       </div>
 
       {onClick ? (

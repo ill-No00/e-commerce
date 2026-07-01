@@ -3,63 +3,33 @@ import { Package, Truck, RotateCcw, XCircle, Loader2 } from "lucide-react";
 import { ordersApi } from "../../api/orders.js";
 import { profileApi } from "../../api/profile.js";
 
-const orders = [
-  {
-    id: "ORDER #4W-9921",
-    name: "CHROME HEARTS DECK",
-    price: "$89.00",
-    status: "SHIPPED",
-    statusColor: "bg-[#ff2d78]",
-    action: "TRACK_PACKAGE",
-    actionIcon: Truck,
-  },
-  {
-    id: "ORDER #4W-8743",
-    name: "STREET GRIP WHEELS 54MM",
-    price: "$45.00",
-    status: "DELIVERED",
-    statusColor: "bg-[#00e5ff]",
-    action: "REORDER",
-    actionIcon: RotateCcw,
-  },
-  {
-    id: "ORDER #4W-7652",
-    name: "GRAPHITE TRUCKS V2",
-    price: "$120.00",
-    status: "PROCESSING",
-    statusColor: "bg-[#666]",
-    action: "CANCEL_REQUEST",
-    actionIcon: XCircle,
-  },
-];
-
-const crewTags = ["OG_MEMBER", "STREET_CERTIFIED", "TOP_CONTRIBUTOR"];
-
 export default function AccountOrders() {
-  const [profile, setProfile] = useState(null);
-  const [orderList, setOrderList] = useState([]);
+  const [profile, setProfile] = useState(undefined);
+  const [orderList, setOrderList] = useState(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      profileApi.get().catch(() => ({ data: null })),
-      ordersApi.list().catch(() => ({ data: [] })),
+      profileApi.get().catch(() => undefined),
+      ordersApi.list().catch(() => undefined),
     ])
       .then(([profileRes, ordersRes]) => {
-        setProfile(profileRes.data);
-        setOrderList(ordersRes.data || []);
+        setProfile(profileRes?.data);
+        setOrderList(ordersRes?.data);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const p = profile || {};
-  const displayName = p.display_name || "RIDER";
-  const email = p.email || "rider@4wheels.com";
-  const stance = p.stance || "REGULAR";
-  const homeSpot = p.home_spot || "Unknown";
-  const joined = p.joined_at ? new Date(p.joined_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "N/A";
-  const tier = p.tier || "STREET";
-  const galleryPoints = p.gallery_points || 0;
+  const displayName = profile?.display_name;
+  const email = profile?.email;
+  const stance = profile?.stance;
+  const homeSpot = profile?.home_spot;
+  const joined = profile?.joined_at
+    ? new Date(profile.joined_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    : undefined;
+  const tier = profile?.tier;
+  const galleryPoints = profile?.gallery_points;
+  const crewTags = profile?.badges;
 
   if (loading) {
     return (
@@ -81,7 +51,7 @@ export default function AccountOrders() {
       <div className="mb-6 md:mb-8">
         <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">MY_ACCOUNT</h1>
         <p className="text-[11px] text-[#888] mt-1 max-w-lg">
-          Welcome back to the Concrete Gallery, {displayName}. Track your drops, manage your decks, and keep your street profile sharp.
+          Welcome back to the Concrete Gallery{displayName ? `, ${displayName}` : ""}. Track your drops, manage your decks, and keep your street profile sharp.
         </p>
       </div>
 
@@ -94,12 +64,12 @@ export default function AccountOrders() {
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#2a2a2a] ring-2 ring-[#ff2d78] shrink-0" />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                  <span className="text-sm md:text-base font-black text-white uppercase tracking-tight">{displayName.toUpperCase().replace(/\s+/g, "_")}</span>
+                  <span className="text-sm md:text-base font-black text-white uppercase tracking-tight">{displayName ? displayName.toUpperCase().replace(/\s+/g, "_") : "—"}</span>
                   <button className="text-[8px] font-bold text-[#888] border border-[#2a2a2a] rounded-full px-2.5 md:px-3 py-1 uppercase tracking-widest hover:text-white hover:border-white transition-all">
                     EDIT_PROFILE
                   </button>
                 </div>
-                <div className="text-[10px] font-bold text-[#ff2d78] uppercase tracking-wider mt-1">{tier}_TIER MEMBER</div>
+                <div className="text-[10px] font-bold text-[#ff2d78] uppercase tracking-wider mt-1">{tier ? `${tier}_TIER MEMBER` : "—"}</div>
               </div>
             </div>
           </div>
@@ -113,7 +83,7 @@ export default function AccountOrders() {
             ].map((item) => (
               <div key={item.label}>
                 <div className="text-[9px] font-bold text-[#888] uppercase tracking-widest">{item.label}</div>
-                <div className="text-xs md:text-sm font-bold text-white mt-0.5 break-words">{item.value}</div>
+                <div className="text-xs md:text-sm font-bold text-white mt-0.5 break-words">{item.value ?? "—"}</div>
               </div>
             ))}
           </div>
@@ -123,17 +93,19 @@ export default function AccountOrders() {
           <div className="bg-[#7c3aed] rounded-2xl p-5 md:p-6">
             <div className="text-[10px] font-black text-white uppercase tracking-widest mb-3">CREW_STATUS</div>
             <div className="flex flex-wrap gap-1.5 md:gap-2">
-              {["OG_MEMBER", "STREET_CERTIFIED", "TOP_CONTRIBUTOR"].map((tag) => (
+              {crewTags?.length ? crewTags.map((tag) => (
                 <span key={tag} className="text-[8px] md:text-[9px] font-bold text-white bg-white/15 rounded-full px-2.5 md:px-3 py-1 uppercase tracking-wider">
                   {tag}
                 </span>
-              ))}
+              )) : (
+                <span className="text-[9px] text-[#888]">No crew badges</span>
+              )}
             </div>
           </div>
 
           <div className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] p-5 md:p-6">
             <div className="text-[10px] font-bold text-[#888] uppercase tracking-widest">GALLERY_POINTS</div>
-            <div className="text-2xl md:text-3xl font-black text-[#00e5ff] mt-1">{galleryPoints.toLocaleString()}</div>
+            <div className="text-2xl md:text-3xl font-black text-[#00e5ff] mt-1">{galleryPoints != null ? galleryPoints.toLocaleString() : "—"}</div>
           </div>
         </div>
       </div>
@@ -145,7 +117,10 @@ export default function AccountOrders() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {orderList.map((order) => {
+          {!orderList?.length && !loading && (
+            <p className="text-xs text-[#888] uppercase tracking-widest col-span-full">No orders yet</p>
+          )}
+          {(orderList || []).map((order) => {
             const cfg = statusConfig[order.status] || { color: "bg-[#666]", icon: Package, action: "VIEW" };
             const ActionIcon = cfg.icon;
             const label = order.order_number || order.id;

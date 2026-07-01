@@ -1,10 +1,7 @@
 import api from "./client";
 
 export const adminApi = {
-  dashboard: () => api.get("/admin/dashboard").then((r) => r.data ).catch((err) => {
-    console.error("Error fetching dashboard data:", err);
-    
-  }),
+  dashboard: () => api.get("/admin/dashboard").then((r) => r.data),
 
   activityLog: (params = {}) =>
     api.get("/admin/dashboard/activity-log", { params }).then((r) => r.data),

@@ -32,13 +32,13 @@ export default function AccountCrew() {
 
   return (
     <div className="min-h-screen">
-      <CrewHeader crew={crewData?.[0]?.crews} />
+      <CrewHeader crew={crewData?.[0]?.crews} crewId={crewId} />
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-[2] min-w-0 space-y-5">
           <CreatePostCard crewId={crewId} />
-          <VideoPostCard />
-          <TextPostCard />
+          <VideoPostCard crewId={crewId} />
+          <TextPostCard crewId={crewId} />
         </div>
 
         <div className="flex-1 min-w-0 space-y-5">

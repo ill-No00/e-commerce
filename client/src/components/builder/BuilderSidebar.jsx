@@ -84,7 +84,7 @@ export default function BuilderSidebar({ currentStep, selections, onStepClick })
                   </div>
                   <div className="text-[8px] text-[#888] mt-0.5 tracking-wider">
                     {state === "complete" && selections[s.label]
-                      ? selections[s.label]
+                      ? (selections[s.label]?.name ?? selections[s.label])
                       : state === "current"
                         ? "IN PROGRESS"
                         : ""}

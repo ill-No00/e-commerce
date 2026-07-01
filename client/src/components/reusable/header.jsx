@@ -1,9 +1,26 @@
+import { useState, useEffect } from "react";
 import { ShoppingCart, User, Search, LogOut } from "lucide-react";
 import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "../../store/auth.jsx";
+import { cartApi } from "../../api/cart.js";
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const [cartCount, setCartCount] = useState(undefined);
+
+  useEffect(() => {
+    if (!user) {
+      setCartCount(undefined);
+      return;
+    }
+    cartApi
+      .get()
+      .then((res) => {
+        const count = res.data?.cart_items?.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(count);
+      })
+      .catch(() => setCartCount(undefined));
+  }, [user]);
 
   return (
     <header className="w-full bg-[#121212]/80 backdrop-blur-md px-8 py-4 fixed top-0 z-50">
@@ -71,9 +88,11 @@ export default function Header() {
           </div>
           <Link to="/cart" className="relative text-[#F8F9FA]" aria-label="Shopping cart">
             <ShoppingCart size={20} />
-            <span className="absolute -top-2 -right-2.5 bg-[#EF476F] text-white text-[9px] rounded-full px-1.5 font-bold leading-tight">
-              2
-            </span>
+            {cartCount != null && cartCount > 0 && (
+              <span className="absolute -top-2 -right-2.5 bg-[#EF476F] text-white text-[9px] rounded-full px-1.5 font-bold leading-tight">
+                {cartCount}
+              </span>
+            )}
           </Link>
           {user ? (
             <button onClick={logout} className="text-[#F8F9FA]" aria-label="Logout">
